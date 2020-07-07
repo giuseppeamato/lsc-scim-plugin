@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="InetOrgPerson">
+
+	<select id="getInetOrgPersonList" resultClass="java.util.HashMap">
+		SELECT pers.id AS id
+		FROM utenti pers
+	</select>
+
+	<select id="getInetOrgPerson" resultClass="java.util.HashMap" parameterClass="java.util.Map">
+		Select
+			'inetOrgPerson' objectClass,
+			TRIM(pers.id) as id,
+			TRIM(pers.cognome) as sn,
+			TRIM(pers.nome) as givenname,
+			TRIM(pers.username) as username,
+			TRIM(pers.email) as mail,
+			TRIM(pers.roles) as roles
+		FROM utenti pers
+		WHERE pers.id = #id#
+	</select>
+
+	<insert id="insertInetOrgPerson" parameterClass="java.util.Map">
+		INSERT INTO utenti
+			( id, cognome, nome, username, email, roles )
+			VALUES ( #id#, #sn#, #givenname#, #username#, #mail#, #roles# )
+	</insert>
+
+	<update id="updateInetOrgPerson" parameterClass="java.util.Map">
+		UPDATE utenti
+			cognome = #sn# , nome = #givenname#, username = #username#, email = #mail#, roles=#roles#
+			WHERE id = #id#
+	</update>
+
+	<delete id="deleteInetOrgPerson" parameterClass="java.util.Map">
+		DELETE FROM utenti
+			WHERE id = #id#
+	</delete>
+
+</sqlMap>

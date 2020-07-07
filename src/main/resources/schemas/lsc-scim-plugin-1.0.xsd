@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://lsc-project.org/XSD/lsc-scim-plugin-1.0.xsd" targetNamespace="http://lsc-project.org/XSD/lsc-scim-plugin-1.0.xsd"
+	elementFormDefault="qualified" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	xmlns:lsc="http://lsc-project.org/XSD/lsc-core-2.1.xsd" jaxb:version="2.0">
+
+	<xsd:import namespace="http://lsc-project.org/XSD/lsc-core-2.1.xsd" schemaLocation="lsc-core-2.1.xsd" />
+	
+	<xsd:element name="scimServiceSettings">
+		<xsd:complexType>
+			<xsd:complexContent>
+				<xsd:extension base="lsc:serviceType">
+					<xsd:sequence>
+						<xsd:element name="entity" type="xsd:string" minOccurs="1" />
+						<xsd:element name="pivot" type="xsd:string" minOccurs="0" />
+						<xsd:element name="domain" type="xsd:string" minOccurs="0" />
+						<xsd:element name="pageSize" type="xsd:int" minOccurs="0" />
+						<xsd:element name="filter" type="xsd:string" minOccurs="0" />
+						<xsd:element name="attributes" type="xsd:string" minOccurs="0" />
+						<xsd:element name="excludedAttributes" type="xsd:string" minOccurs="0" />
+					</xsd:sequence>
+				</xsd:extension>
+			</xsd:complexContent>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>
