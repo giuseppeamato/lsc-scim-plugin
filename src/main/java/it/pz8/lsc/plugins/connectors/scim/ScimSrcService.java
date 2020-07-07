@@ -33,7 +33,7 @@ import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
  */
 public class ScimSrcService implements IService {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger(ScimSrcService.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ScimSrcService.class);
 		
     private final Class<IBean> beanClass;
 
@@ -60,7 +60,7 @@ public class ScimSrcService implements IService {
     }
     
 	@Override
-	public Map<String, LscDatasets> getListPivots() throws LscServiceException {
+    public Map<String, LscDatasets> getListPivots() throws LscServiceException {
         try {        	
             return dao.getList();
         } catch (Exception e) {
@@ -68,10 +68,10 @@ public class ScimSrcService implements IService {
             LOGGER.debug(e.toString(), e);
             throw new LscServiceCommunicationException(e);
         }
-	}
+    }
 	
 	@Override
-	public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
+    public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
 		LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
         if (lscDatasets.getAttributesNames().size() < 1) {
             return null;
@@ -81,7 +81,7 @@ public class ScimSrcService implements IService {
         } else {
             return getBeanForClean(lscDatasets.getStringValueAttribute(dao.getPivotName()));
         }
-	}
+    }
 	
     private IBean getBeanFromSameService(String idValue) throws LscServiceException {
         if (idValue == null) {
