@@ -59,7 +59,7 @@ public class ScimSrcService implements IService {
         }
     }
     
-	@Override
+    @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
         try {        	
             return dao.getList();
@@ -70,9 +70,9 @@ public class ScimSrcService implements IService {
         }
     }
 	
-	@Override
+    @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-		LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
+        LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
         if (lscDatasets.getAttributesNames().size() < 1) {
             return null;
         }
