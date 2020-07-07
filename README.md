@@ -1,2 +1,2 @@
-# lsc-scim-plugin
+# LSC SCIM Plugin
 LSC SCIM Plugin
