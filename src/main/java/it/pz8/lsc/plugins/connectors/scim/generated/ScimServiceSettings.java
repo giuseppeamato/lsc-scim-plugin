@@ -66,7 +66,7 @@ public class ScimServiceSettings
     protected String excludedAttributes;
 
     /**
-     * Recupera il valore della propriet� entity.
+     * Recupera il valore della proprietà entity.
      * 
      * @return
      *     possible object is
@@ -78,7 +78,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� entity.
+     * Imposta il valore della proprietà entity.
      * 
      * @param value
      *     allowed object is
@@ -90,7 +90,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� pivot.
+     * Recupera il valore della proprietà pivot.
      * 
      * @return
      *     possible object is
@@ -102,7 +102,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� pivot.
+     * Imposta il valore della proprietà pivot.
      * 
      * @param value
      *     allowed object is
@@ -114,7 +114,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� domain.
+     * Recupera il valore della proprietà domain.
      * 
      * @return
      *     possible object is
@@ -126,7 +126,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� domain.
+     * Imposta il valore della proprietà domain.
      * 
      * @param value
      *     allowed object is
@@ -138,7 +138,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� pageSize.
+     * Recupera il valore della proprietà pageSize.
      * 
      * @return
      *     possible object is
@@ -150,7 +150,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� pageSize.
+     * Imposta il valore della proprietà pageSize.
      * 
      * @param value
      *     allowed object is
@@ -162,7 +162,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� filter.
+     * Recupera il valore della proprietà filter.
      * 
      * @return
      *     possible object is
@@ -174,7 +174,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� filter.
+     * Imposta il valore della proprietà filter.
      * 
      * @param value
      *     allowed object is
@@ -186,7 +186,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� attributes.
+     * Recupera il valore della proprietà attributes.
      * 
      * @return
      *     possible object is
@@ -198,7 +198,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� attributes.
+     * Imposta il valore della proprietà attributes.
      * 
      * @param value
      *     allowed object is
@@ -210,7 +210,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� excludedAttributes.
+     * Recupera il valore della proprietà excludedAttributes.
      * 
      * @return
      *     possible object is
@@ -222,7 +222,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� excludedAttributes.
+     * Imposta il valore della proprietà excludedAttributes.
      * 
      * @param value
      *     allowed object is
