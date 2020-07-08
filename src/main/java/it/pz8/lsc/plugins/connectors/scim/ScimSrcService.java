@@ -34,11 +34,11 @@ import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
 public class ScimSrcService implements IService {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ScimSrcService.class);
-		
+
     private final Class<IBean> beanClass;
 
     private final ScimDao dao;
-    
+
     public ScimSrcService(final TaskType task) throws LscServiceConfigurationException {
         try {
             if (task.getPluginSourceService().getAny() == null || task.getPluginSourceService().getAny().size() != 1 || !((task.getPluginSourceService().getAny().get(0) instanceof ScimServiceSettings))) {
@@ -46,7 +46,7 @@ public class ScimSrcService implements IService {
             }
             ScimServiceSettings settings = (ScimServiceSettings)task.getPluginSourceService().getAny().get(0);
             if (StringUtils.isBlank(settings.getEntity()) || (!settings.getEntity().equals(USERS) && !settings.getEntity().equals(GROUPS))) {
-            	throw new LscServiceConfigurationException("Incorrect entity setting.");
+                throw new LscServiceConfigurationException("Incorrect entity setting.");
             }
             PluginConnectionType pluginConnectionType = (PluginConnectionType)task.getPluginSourceService().getConnection().getReference();
             if (pluginConnectionType == null) {
@@ -58,8 +58,8 @@ public class ScimSrcService implements IService {
             throw new LscServiceConfigurationException(e);
         }
     }
-    
-	@Override
+
+    @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
         try {        	
             return dao.getList();
@@ -69,10 +69,10 @@ public class ScimSrcService implements IService {
             throw new LscServiceCommunicationException(e);
         }
     }
-	
-	@Override
+
+    @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-		LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
+        LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
         if (lscDatasets.getAttributesNames().size() < 1) {
             return null;
         }
@@ -82,7 +82,7 @@ public class ScimSrcService implements IService {
             return getBeanForClean(lscDatasets.getStringValueAttribute(dao.getPivotName()));
         }
     }
-	
+
     private IBean getBeanFromSameService(String idValue) throws LscServiceException {
         if (idValue == null) {
             return null;
@@ -110,7 +110,7 @@ public class ScimSrcService implements IService {
     }
 
     private IBean getBeanForClean(String pivotValue) throws LscServiceException {
-    	String pivotName = dao.getPivotName();
+        String pivotName = dao.getPivotName();
         try {
             Optional<Entry<String, LscDatasets>> entity = dao.findFirstByPivot(pivotValue);
             if (entity.isPresent()) {
