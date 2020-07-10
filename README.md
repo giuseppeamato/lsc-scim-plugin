@@ -17,7 +17,7 @@ There are an example of configuration in the `etc` directory. The `lsc.xml` file
 + `password`: user password
 
 ##### Service settings
-+ `entity`: the port of the proxy service
++ `entity`: the entity to synchronize ('User' or 'Group') 
 + `pivot`: the pivot attribute name, default is **"id"** (OPTIONAL)
 + `domain`: The name of the user store to which filtering needs to be applied  (OPTIONAL) 
 + `pageSize`: Specifies the desired maximum number of query results (OPTIONAL) 
