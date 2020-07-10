@@ -157,7 +157,7 @@ public class ScimDao {
 
     public Optional<Entry<String, LscDatasets>> findFirstByPivot(String pivotValue) throws LscServiceException {
         StringBuilder pivotFilter = new StringBuilder();
-        pivotFilter.append(getPivotName()).append(" eq \"").append(pivotValue.replaceAll("'", "''")).append("\"");
+        pivotFilter.append(getPivotName()).append(" eq ").append(pivotValue.replaceAll("'", "''"));
         String computedFilter = filter.map(f -> f + " and " + pivotFilter.toString()).orElse(pivotFilter.toString());
         return getList(Optional.of(computedFilter)).entrySet().stream().findFirst();
     }
