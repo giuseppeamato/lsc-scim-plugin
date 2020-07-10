@@ -28,7 +28,7 @@
 	</insert>
 
 	<update id="updateInetOrgPerson" parameterClass="java.util.Map">
-		UPDATE utenti
+		UPDATE utenti set
 			cognome = #sn# , nome = #givenname#, username = #username#, email = #mail#, roles=#roles#
 			WHERE id = #id#
 	</update>
