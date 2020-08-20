@@ -1,8 +1,8 @@
 package it.pz8.lsc.plugins.connectors.scim;
 
+import static it.pz8.lsc.plugins.connectors.scim.ScimDao.GROUPS;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.ID;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.USERS;
-import static it.pz8.lsc.plugins.connectors.scim.ScimDao.GROUPS;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -39,6 +39,7 @@ public class ScimSrcService implements IService {
 
     private final ScimDao dao;
 
+    @SuppressWarnings("unchecked")
     public ScimSrcService(final TaskType task) throws LscServiceConfigurationException {
         try {
             if (task.getPluginSourceService().getAny() == null || task.getPluginSourceService().getAny().size() != 1 || !((task.getPluginSourceService().getAny().get(0) instanceof ScimServiceSettings))) {
@@ -61,7 +62,8 @@ public class ScimSrcService implements IService {
 
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-        try {        	
+    	LOGGER.debug(String.format("Call to getListPivots"));    	
+        try {
             return dao.getList();
         } catch (Exception e) {
             LOGGER.error(String.format("Error while getting pivot list (%s)", e));
@@ -76,7 +78,7 @@ public class ScimSrcService implements IService {
         if (lscDatasets.getAttributesNames().size() < 1) {
             return null;
         }
-        if (fromSameService) {     	
+        if (fromSameService) {
             return getBeanFromSameService(lscDatasets.getStringValueAttribute(ID));
         } else {
             return getBeanForClean(lscDatasets.getStringValueAttribute(dao.getPivotName()));
@@ -90,14 +92,14 @@ public class ScimSrcService implements IService {
         try {
             Map<String, Object> entity = dao.getDetails(idValue);
             IBean bean = beanClass.newInstance();
-            bean.setMainIdentifier(entity.get(dao.getPivotName()).toString());
+            bean.setMainIdentifier(idValue);
             LscDatasets datasets = new LscDatasets();
             entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null?new LinkedHashSet<>():entry.getValue()));
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("id %s not found", idValue));
-            return null;            
+            return null;
         } catch (ProcessingException | WebApplicationException e) {
             LOGGER.error(String.format("Exception while getting bean with id %s (%s)", idValue, e));
             LOGGER.error(e.toString(), e);
@@ -123,7 +125,7 @@ public class ScimSrcService implements IService {
             }
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("%s %s not found", pivotName, pivotValue));
-            return null;            
+            return null;
         } catch (ProcessingException | WebApplicationException e) {
             LOGGER.error(String.format("Exception while getting bean %s/%s (%s)", pivotName, pivotValue, e));
             LOGGER.error(e.toString(), e);
@@ -134,4 +136,5 @@ public class ScimSrcService implements IService {
             throw new LscServiceException(e);
         }
     }
+
 }
