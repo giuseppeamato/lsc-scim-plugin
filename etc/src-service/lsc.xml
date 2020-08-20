@@ -1,0 +1,185 @@
+<?xml version="1.0" ?>
+<lsc xmlns="http://lsc-project.org/XSD/lsc-core-2.1.xsd" 
+	xmlns:scim="http://lsc-project.org/XSD/lsc-scim-plugin-1.1.xsd"
+	revision="0">
+	<connections>
+		<pluginConnection>
+			<name>scim-src-conn</name>
+			<url>https://localhost:9443/scim2</url>
+			<username>admin</username>
+			<password>admin</password>
+		</pluginConnection>		
+		<databaseConnection>
+			<name>jdbc-dst-conn</name>
+			<url>jdbc:postgresql://localhost:5432/test</url>
+			<username>postgres</username>
+			<password>postgres</password>
+			<driver>org.postgresql.Driver</driver>
+		</databaseConnection>
+	</connections>
+	<tasks>
+		<task>		
+			<name>Users</name>
+			<bean>org.lsc.beans.SimpleBean</bean>
+			<pluginSourceService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimSrcService">
+				<name>scim-users-source-service</name>
+				<connection reference="scim-src-conn" />
+				<scim:scimServiceSettings>
+					<name>scim-usr-src-service-settings</name>
+					<connection reference="scim-src-conn" />
+					<scim:entity>Users</scim:entity>
+					<scim:schema>
+						<scim:namespace>
+							<scim:alias>ENTERPRISE_USER</scim:alias>
+							<scim:uri>urn:ietf:params:scim:schemas:extension:enterprise:2.0:User</scim:uri>
+						</scim:namespace>
+					</scim:schema>
+				</scim:scimServiceSettings>
+			</pluginSourceService>
+			<databaseDestinationService>
+				<name>jdbc-dst-service</name>
+				<connection reference="jdbc-dst-conn" />
+				<requestNameForList>getInetOrgPersonList</requestNameForList>
+				<requestNameForObject>getInetOrgPerson</requestNameForObject>
+				<requestsNameForInsert><string>insertInetOrgPerson</string></requestsNameForInsert>
+				<requestsNameForUpdate><string>updateInetOrgPerson</string></requestsNameForUpdate>
+				<requestsNameForDelete><string>deleteInetOrgPerson</string></requestsNameForDelete>
+			</databaseDestinationService>
+			<propertiesBasedSyncOptions>
+				<mainIdentifier>srcBean.getMainIdentifier()</mainIdentifier>
+				<defaultDelimiter>;</defaultDelimiter>
+				<defaultPolicy>FORCE</defaultPolicy>				
+				<conditions>
+					<create>true</create>
+					<update>true</update>
+					<delete>true</delete>
+					<changeId>false</changeId>
+				</conditions>
+                <dataset>
+                    <name>id</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("id")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>givenname</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("name.givenName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>sn</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("name.familyName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>mail</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetValuesById("emails[]")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>username</name>
+                    <forceValues> 
+                        <string>srcBean.getDatasetFirstValueById("userName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>phonenumbers</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("phoneNumbers[]")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>workemail</name>
+                    <forceValues>
+						<string>srcBean.getDatasetFirstValueById("emails[type eq work]")</string>
+                    </forceValues>					
+                </dataset>
+                <dataset>
+                    <name>address</name>
+                    <forceValues>
+						<string>srcBean.getDatasetFirstValueById("addresses[type eq work]")</string>
+                    </forceValues>					
+                </dataset>
+                <dataset>
+                    <name>department</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("ENTERPRISE_USER.department")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>roles</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetValuesById("roles[type eq default]")</string>
+                    </forceValues>
+                </dataset>
+				<!--
+                <dataset>
+                    <name>roles</name>
+                    <forceValues>
+                        <string>
+							<![CDATA[rjs:
+								var memberOf = '';
+								srcBean.getAttributesNames().forEach(function(entry) {
+									if (entry.startsWith("groups[display eq ")) {
+										memberOf = memberOf + entry.substring("groups[display eq ".length, entry.indexOf("]"))+",";
+									}
+								});
+								memberOf.slice(0, -1)
+							]]>		  
+						</string>
+                    </forceValues>
+                </dataset>
+				-->
+    		</propertiesBasedSyncOptions>
+		</task>
+		<task>		
+			<name>Groups</name>
+			<bean>org.lsc.beans.SimpleBean</bean>
+			<pluginSourceService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimSrcService">
+				<name>scim-grp-source-service</name>
+				<connection reference="scim-src-conn" />
+				<scim:scimServiceSettings>
+					<name>scim-grp-src-service-settings</name>
+					<connection reference="scim-src-conn" />
+					<scim:entity>Groups</scim:entity>
+					<scim:domain>PRIMARY</scim:domain>
+				</scim:scimServiceSettings>
+			</pluginSourceService>
+			<databaseDestinationService>
+				<name>jdbc-grp-dst-service</name>
+				<connection reference="jdbc-dst-conn" />
+				<requestNameForList>getGroupOfNamesList</requestNameForList>
+				<requestNameForObject>getGroupOfNames</requestNameForObject>
+				<requestsNameForInsert><string>insertGroupOfNames</string></requestsNameForInsert>
+				<requestsNameForUpdate><string>updateGroupOfNames</string></requestsNameForUpdate>
+				<requestsNameForDelete><string>deleteGroupOfNames</string></requestsNameForDelete>
+			</databaseDestinationService>
+			<propertiesBasedSyncOptions>
+				<mainIdentifier>srcBean.getMainIdentifier()</mainIdentifier>
+				<defaultDelimiter>;</defaultDelimiter>
+				<defaultPolicy>FORCE</defaultPolicy>				
+				<conditions>
+					<create>true</create>
+					<update>true</update>
+					<delete>true</delete>
+					<changeId>false</changeId>
+				</conditions>
+                <dataset>
+                    <name>id</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("id")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>displayname</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetValuesById("displayName")</string>
+                    </forceValues>
+                </dataset>
+    		</propertiesBasedSyncOptions>
+		</task>
+	</tasks>
+</lsc>
