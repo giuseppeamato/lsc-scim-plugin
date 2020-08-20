@@ -2,7 +2,7 @@
 // Questo file è stato generato dall'architettura JavaTM per XML Binding (JAXB) Reference Implementation, v2.2.8-b130911.1802 
 // Vedere <a href="http://java.sun.com/xml/jaxb">http://java.sun.com/xml/jaxb</a> 
 // Qualsiasi modifica a questo file andrà persa durante la ricompilazione dello schema di origine. 
-// Generato il: 2020.07.07 alle 05:40:53 PM CEST 
+// Generato il: 2020.08.07 alle 08:57:06 PM CEST 
 //
 
 
@@ -42,6 +42,22 @@ public class ObjectFactory {
      */
     public ScimServiceSettings createScimServiceSettings() {
         return new ScimServiceSettings();
+    }
+
+    /**
+     * Create an instance of {@link SchemasType }
+     * 
+     */
+    public SchemasType createSchemasType() {
+        return new SchemasType();
+    }
+
+    /**
+     * Create an instance of {@link NamespaceType }
+     * 
+     */
+    public NamespaceType createNamespaceType() {
+        return new NamespaceType();
     }
 
 }
