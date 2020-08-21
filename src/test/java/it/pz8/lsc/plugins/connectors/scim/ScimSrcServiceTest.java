@@ -99,8 +99,8 @@ public class ScimSrcServiceTest {
     
     @Test
     void listPivotShouldReturnOneUserWhenOneResult() throws LscServiceException {
-    	when(serviceSettings.getFilter()).thenReturn("");
-    	when(serviceSettings.getPivot()).thenReturn(null);
+        when(serviceSettings.getFilter()).thenReturn("");
+        when(serviceSettings.getPivot()).thenReturn(null);
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
@@ -114,8 +114,8 @@ public class ScimSrcServiceTest {
     
     @Test
     void getBeanShouldReturnNullWhenEmptyDataset() throws Exception {
-    	when(serviceSettings.getFilter()).thenReturn("");
-    	when(serviceSettings.getPivot()).thenReturn(null);
+        when(serviceSettings.getFilter()).thenReturn("");
+        when(serviceSettings.getPivot()).thenReturn(null);
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
@@ -124,8 +124,8 @@ public class ScimSrcServiceTest {
 
     @Test
     void getBeanShouldReturnNullWhenNoMatchingId() throws Exception {
-    	when(serviceSettings.getFilter()).thenReturn("");
-    	when(serviceSettings.getPivot()).thenReturn(null);
+        when(serviceSettings.getFilter()).thenReturn("");
+        when(serviceSettings.getPivot()).thenReturn(null);
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
@@ -135,11 +135,11 @@ public class ScimSrcServiceTest {
     
     @Test
     void getBeanShouldReturnMainIdentifierSetToIdWhenDefaultPivot() throws Exception {
-    	when(serviceSettings.getFilter()).thenReturn("");
-    	when(serviceSettings.getPivot()).thenReturn(null);
+        when(serviceSettings.getFilter()).thenReturn("");
+        when(serviceSettings.getPivot()).thenReturn(null);
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
-    	ScimSrcService testSrcService = new ScimSrcService(task);
+        ScimSrcService testSrcService = new ScimSrcService(task);
         Map<String, LscDatasets> pivots = testSrcService.getListPivots();
         String firstUserPivotValue = pivots.keySet().stream().findFirst().get();        
         IBean bean = testSrcService.getBean("id", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
@@ -148,11 +148,11 @@ public class ScimSrcServiceTest {
 
     @Test
     void getBeanShouldReturnMainIdentifierSetToIdWhenMailAsPivot() throws Exception {
-    	when(serviceSettings.getFilter()).thenReturn("");
-    	when(serviceSettings.getPivot()).thenReturn("emails");
+        when(serviceSettings.getFilter()).thenReturn("");
+        when(serviceSettings.getPivot()).thenReturn("emails");
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
-    	ScimSrcService testSrcService = new ScimSrcService(task);
+        ScimSrcService testSrcService = new ScimSrcService(task);
         Map<String, LscDatasets> pivots = testSrcService.getListPivots();
         String firstUserPivotValue = pivots.keySet().stream().findFirst().get();
         IBean bean = testSrcService.getBean("emails", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
@@ -195,13 +195,13 @@ public class ScimSrcServiceTest {
         Map<String, LscDatasets> pivots = testSrcService.getListPivots();
         String firstUserPivotValue = pivots.keySet().stream().findFirst().get();
         LscDatasets datasets = new LscDatasets(ImmutableMap.of("userName", firstUserPivotValue));
-        IBean bean = testSrcService.getBean("userName", datasets, !FROM_SAME_SERVICE);		
+        IBean bean = testSrcService.getBean("userName", datasets, !FROM_SAME_SERVICE);        
         assertThat(bean.getDatasetFirstValueById("id")).isNotBlank();
     }
     
     @Test
     void listPivotShouldReturnEmptyWhenNoResultByFilter() throws Exception {
-    	when(serviceSettings.getFilter()).thenReturn("userName co pippo");
+        when(serviceSettings.getFilter()).thenReturn("userName co pippo");
         when(serviceSettings.getPivot()).thenReturn(null);
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
