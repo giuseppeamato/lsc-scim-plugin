@@ -37,18 +37,18 @@ public class ScimDstService implements IWritableService {
     private final Class<IBean> beanClass;
     private final ScimServiceSettings settings;
     private final ScimDao dao;
-    
+
     @SuppressWarnings("unchecked")
     public ScimDstService(final TaskType task) throws LscServiceConfigurationException, LscServiceCommunicationException {
         try {
             if (task.getPluginDestinationService().getAny() == null || task.getPluginDestinationService().getAny().size() != 1 || !((task.getPluginDestinationService().getAny().get(0) instanceof ScimServiceSettings))) {
                 throw new LscServiceConfigurationException("Unable to identify the scim service configuration inside the plugin source node of the task: " + task.getName());
             }
-            settings = (ScimServiceSettings)task.getPluginDestinationService().getAny().get(0);
+            settings = (ScimServiceSettings) task.getPluginDestinationService().getAny().get(0);
             if (StringUtils.isBlank(settings.getEntity()) || (!settings.getEntity().equals(USERS) && !settings.getEntity().equals(GROUPS))) {
                 throw new LscServiceConfigurationException("Incorrect entity setting.");
             }
-            PluginConnectionType pluginConnectionType = (PluginConnectionType)task.getPluginDestinationService().getConnection().getReference();
+            PluginConnectionType pluginConnectionType = (PluginConnectionType) task.getPluginDestinationService().getConnection().getReference();
             if (pluginConnectionType == null) {
                 throw new LscServiceConfigurationException("Unable to identify the scim connection settings inside the connection node of the task: " + task.getName());
             }
@@ -58,10 +58,10 @@ public class ScimDstService implements IWritableService {
             throw new LscServiceConfigurationException(e);
         }
     }
-    
+
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-    	LOGGER.debug(String.format("Call to getListPivots"));
+        LOGGER.debug(String.format("Call to getListPivots"));
         try {
             return dao.getList();
         } catch (Exception e) {
@@ -74,19 +74,19 @@ public class ScimDstService implements IWritableService {
     @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
         LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
-        String pivotName = dao.getPivotName(); 
+        String pivotName = dao.getPivotName();
         String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
         try {
             Map<String, Object> entity = dao.getDetailsByPivot(pivotValue);
             IBean bean = beanClass.newInstance();
             bean.setMainIdentifier(entity.get(pivotName).toString());
             LscDatasets datasets = new LscDatasets();
-            entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null?new LinkedHashSet<>():entry.getValue()));
+            entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null ? new LinkedHashSet<>() : entry.getValue()));
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("id %s not found", pivotValue));
-            return null;            
+            return null;
         } catch (ProcessingException | WebApplicationException e) {
             LOGGER.error(String.format("Exception while getting bean with id %s (%s)", pivotValue, e));
             LOGGER.error(e.toString(), e);
@@ -100,12 +100,12 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public boolean apply(LscModifications lm) throws LscServiceException {
-    	boolean result = false;
+        boolean result = false;
         try {
             if (lm.getMainIdentifier() == null) {
                 LOGGER.error("MainIdentifier is needed to update");
             } else {
-                switch(lm.getOperation()) {
+                switch (lm.getOperation()) {
                 case CHANGE_ID:
                     LOGGER.warn("Trying to change ID of SCIM entry, impossible operation, ignored.");
                     // Silently return without doing anything
@@ -127,7 +127,7 @@ public class ScimDstService implements IWritableService {
                 default:
                     LOGGER.error(String.format("Unknown operation %s", lm.getOperation()));
                     result = false;
-                }            	
+                }
             }
         } catch (NotFoundException e) {
             LOGGER.error(String.format("NotFoundException while writing (%s)", e));
