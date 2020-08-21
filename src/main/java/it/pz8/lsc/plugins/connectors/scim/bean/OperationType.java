@@ -8,24 +8,24 @@ import java.util.Arrays;
  */
 public enum OperationType {
 
-	ADD("add"), 
-	REPLACE("replace"), 
-	REMOVE("remove");
-	
-	private final String name;
+    ADD("add"), 
+    REPLACE("replace"), 
+    REMOVE("remove");
 
-	private OperationType(String name) {
-		this.name = name;
-	}
+    private final String name;
 
-	public String getName() {
-		return this.name;
-	}
+    private OperationType(String name) {
+        this.name = name;
+    }
 
-	public static OperationType getFromName(String name) {
-		return Arrays.stream(OperationType.values())
-				.filter(op -> op.name().toLowerCase().equals(name.toLowerCase()))
-				.findFirst().orElse(null);
-	}
+    public String getName() {
+        return this.name;
+    }
+
+    public static OperationType getFromName(String name) {
+        return Arrays.stream(OperationType.values())
+                .filter(op -> op.name().toLowerCase().equals(name.toLowerCase()))
+                .findFirst().orElse(null);
+    }
 
 }

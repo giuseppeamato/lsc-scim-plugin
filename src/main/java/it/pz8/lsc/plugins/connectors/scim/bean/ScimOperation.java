@@ -6,10 +6,10 @@ package it.pz8.lsc.plugins.connectors.scim.bean;
  */
 public abstract class ScimOperation {
 
-	protected String op;
+    protected String op;
 
-	public String getOp() {
-		return op;
-	}
+    public String getOp() {
+        return op;
+    }
 
 }
