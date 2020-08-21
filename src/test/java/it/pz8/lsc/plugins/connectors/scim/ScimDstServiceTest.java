@@ -56,7 +56,6 @@ public class ScimDstServiceTest {
 	private static final String BASEPATH = "https://localhost:%d/scim2";
 	private static final String USERNAME = "admin";
 	private static final String PASSWORD = "admin";
-	private static final boolean FROM_SAME_SERVICE = true;
 
 	private static int mappedPort;
 	private static GenericContainer<?> wso2ids;
@@ -96,12 +95,6 @@ public class ScimDstServiceTest {
 		when(serviceSettings.getSourcePivot()).thenReturn("uid");
 		when(serviceSettings.getAttributes()).thenReturn(null);
 		when(serviceSettings.getExcludedAttributes()).thenReturn(null);
-		ValuesType writeableAttrs = new ValuesType();
-		
-//TODO PERCHE' RIESCO A SCRIVERE PHONENUMBERS E DEPARTMENT???		
-		writeableAttrs.getString().addAll(ImmutableList.of("userName", "name.givenName", "name.familyName", "emails[]"));
-		when(serviceSettings.getWritableAttributes()).thenReturn(writeableAttrs);
-		
 		when(task.getBean()).thenReturn("org.lsc.beans.SimpleBean");
 		when(task.getPluginDestinationService()).thenReturn(pluginDestinationService);
 	}
