@@ -39,7 +39,7 @@ The directory `dst-service`, instead, contains a configuration example of synchr
 ##### schema configuration
 The connector flattens the nested structure of the SCIM response into a key-value map (with keys as path with dot–notation form) and viceversa, 
 so, when attributes with schema extension URI containing '.' are envolved, for example `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`, 
-the dot char cause problems; therefore is important that also the alias must not contains the '.' char.
+the dot char cause problems; therefore is important that the alias must not contains the '.' char.
 The services make the proper transformations transparently. 
 
 E.g.:
