@@ -326,7 +326,7 @@ public class ScimDao {
                         // Simple multivalue
                         value = stringValuesToJsonValues(diff.getValues());
                     } else {
-                        // Complex multivalue
+                        // Multivalue with path
                         if (hasValue(lm.getDestinationBean(), diff.getAttributeName())) {
                             path = (!diff.getOperation().equals(REPLACE_VALUES))?path:replaceAlias(diff.getAttributeName()).concat(".").concat(VALUE_ATTRIBUTE);
                             value = getFirstValueAsString(diff.getValues());
