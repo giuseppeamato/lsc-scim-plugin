@@ -13,7 +13,7 @@ import javax.xml.bind.DatatypeConverter;
  *
  */
 public class BasicAuthenticator implements ClientRequestFilter {
-	
+
     private final String user;
     private final String password;
 
