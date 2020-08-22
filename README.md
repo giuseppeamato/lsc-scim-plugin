@@ -34,7 +34,7 @@ In the `etc` directory there are two configuration examples:
 
 the directory `src-service` contains a configuration example of synchronization from SCIM2 to database. 
 
-The directory `dst-service`, instead, contains a configuration example of synchronization from LDAP to SCIM2
+The directory `dst-service`, contains a configuration example of synchronization from LDAP to SCIM2
 
 ##### schema configuration
 The connector flattens the nested structure of the SCIM response into a key-value map (with keys as path with dot–notation form) and viceversa, 
@@ -55,7 +55,7 @@ E.g.:
 
 ##### Source Pivot
 
-During the sync phase, the destination service have to check the source dataset to find the ID of the item, if the pivot attribute name on the source doesn't have the same name of the destination counterpart,
+During the sync phase, the destination service has to check the source dataset to find the ID of the item, if the pivot attribute name on the source doesn't have the same name of the destination counterpart,
 you have to set that name in the sourcePivot configuration parameter.
 Future versions of this plugin will relies on **pivotTransformation** feature of LSC 2.2.
 
