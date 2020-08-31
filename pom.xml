@@ -31,6 +31,10 @@
                     <artifactId>google-collections</artifactId>
                     <groupId>com.google.collections</groupId>
                 </exclusion>
+				<exclusion>
+					<groupId>javaee</groupId>
+					<artifactId>javaee-api</artifactId>
+				</exclusion>                
                 <exclusion>
                     <groupId>junit</groupId>
                     <artifactId>junit</artifactId>
