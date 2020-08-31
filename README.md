@@ -19,7 +19,7 @@ Run LSC with flag **-DLSC.PLUGINS.PACKAGEPATH=it.pz8.lsc.plugins.connectors.scim
 The test phase of build process is docker container based, test units connects via https 
 to the services exposed by them, so you must include the SSL certificate into your Java 
 truststore (cacerts file).
-Latest release is based on WSO2 IdS v5.10.0, so the certificate is the following:
+Latest release tests are based on WSO2 IdS v5.10.0, so the certificate is the following:
 
 ```xml 
 -----BEGIN CERTIFICATE-----
