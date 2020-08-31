@@ -9,6 +9,44 @@ The object of this plugin is to synchronize users and groups between an identity
 <em>The destination service is still experimental</em>, although mostly working, because of some bugs in my SCIM provider reference implementation (WSO2 IdS). 
 I'll test this plugin with other SCIM compliant identity servers in the near future.
 
+## Installation
+
+Download the latest distibution asset or build it with maven and upload the jar into LSC lib 
+folder.
+Run LSC with flag **-DLSC.PLUGINS.PACKAGEPATH=it.pz8.lsc.plugins.connectors.scim.generated**
+
+**Build note**:
+The test phase of build process is docker container based, test units connects via https 
+to the services exposed by them, so you must include the SSL certificate into your Java 
+truststore (cacerts file).
+Latest release is based on WSO2 IdS v5.10.0, so the certificate is the following:
+
+```xml 
+-----BEGIN CERTIFICATE-----
+MIIDqTCCApGgAwIBAgIEXbABozANBgkqhkiG9w0BAQsFADBkMQswCQYDVQQGEwJV
+UzELMAkGA1UECAwCQ0ExFjAUBgNVBAcMDU1vdW50YWluIFZpZXcxDTALBgNVBAoM
+BFdTTzIxDTALBgNVBAsMBFdTTzIxEjAQBgNVBAMMCWxvY2FsaG9zdDAeFw0xOTEw
+MjMwNzMwNDNaFw0yMjAxMjUwNzMwNDNaMGQxCzAJBgNVBAYTAlVTMQswCQYDVQQI
+DAJDQTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzENMAsGA1UECgwEV1NPMjENMAsG
+A1UECwwEV1NPMjESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEAxeqoZYbQ/Sr8DOFQ+/qbEbCp6Vzb5hzH7oa3hf2FZxRK
+F0H6b8COMzz8+0mvEdYVvb/31jMEL2CIQhkQRol1IruD6nBOmkjuXJSBficklMaJ
+ZORhuCrB4roHxzoG19aWmscA0gnfBKo2oGXSjJmnZxIh+2X6syHCfyMZZ00LzDyr
+goXWQXyFvCA2ax54s7sKiHOM3P4A9W4QUwmoEi4HQmPgJjIM4eGVPh0GtIANN+BO
+Q1KkUI7OzteHCTLu3VjxM0sw8QRayZdhniPF+U9n3fa1mO4KLBsW4mDLjg8R/JuA
+GTX/SEEGj0B5HWQAP6myxKFz2xwDaCGvT+rdvkktOwIDAQABo2MwYTAUBgNVHREE
+DTALgglsb2NhbGhvc3QwHQYDVR0OBBYEFEDpLB4PDgzsdxD2FV3rVnOr/A0DMB0G
+A1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjALBgNVHQ8EBAMCBPAwDQYJKoZI
+hvcNAQELBQADggEBAE8H/axAgXjt93HGCYGumULW2lKkgqEvXryP2QkRpbyQSsTY
+cL7ZLSVB7MVVHtIsHh8f1C4Xq6Qu8NUrqu5ZLC1pUByaqR2ZIzcj/OWLGYRjSTHS
+VmVIq9QqBq1j7r6f3BWqaOIiknmTzEuqIVlOTY0gO+SHdS62vr2FCz4yOrBEulGA
+vomsU8sqg4PhFnkhxI4M912Ly+2RgN9L7AkhzK+EzXY1/QtlI/VysNfS6zrHasKz
+6CrKKCGqQnBnSvSTyF9OR5KFHnkAwE995IZrcSQicMxsLhTMUHDLQ/gRyy7V/ZpD
+MfAWR+5OeQiNAp/bG4fjJoTdoqkul51+2bHHVrU=
+-----END CERTIFICATE-----
+```
+
+
 ## Configuration
 
 ##### Connection
@@ -40,7 +78,7 @@ The directory `dst-service`, contains a configuration example of synchronization
 The connector flattens the nested structure of the SCIM response into a key-value map (with keys as path with dot–notation form) and viceversa, 
 so, when attributes with schema extension URI containing '.' are envolved, for example `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`, 
 the dot char cause problems; therefore is important that the alias must not contains the '.' char.
-The services make the proper transformations transparently. 
+The services makes the proper transformations transparently. 
 
 E.g.:
  
