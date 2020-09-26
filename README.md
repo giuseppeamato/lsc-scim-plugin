@@ -2,6 +2,8 @@
 
 A SCIM2 plugin connector for LSC (LDAP Synchronization Connector)
 
+[![Build Status](https://travis-ci.org/giuseppeamato/lsc-scim-plugin.svg?branch=master)](https://travis-ci.org/giuseppeamato/lsc-scim-plugin)
+
 ## Goal
 The object of this plugin is to synchronize users and groups between an identity server supporting SCIM2 protocol and another LSC compatible source/destination. For example it can be used to synchronize users from a WSO2 Identity Server user store to an application database.
 
