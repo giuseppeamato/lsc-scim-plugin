@@ -1,1 +1,4 @@
 language: java
+before_install:
+    - wget https://github.com/giuseppeamato/lsc-scim-plugin/releases/download/v1.1.0/wso2ids.crt
+    - keytool -importcert -trustcacerts -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/jre/lib/security/cacerts
