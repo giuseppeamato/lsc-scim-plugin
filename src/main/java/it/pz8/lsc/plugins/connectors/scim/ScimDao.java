@@ -1,7 +1,6 @@
 package it.pz8.lsc.plugins.connectors.scim;
 
-import static org.lsc.LscDatasetModification.LscDatasetModificationType.DELETE_VALUES;
-import static org.lsc.LscDatasetModification.LscDatasetModificationType.REPLACE_VALUES;
+import static org.lsc.LscDatasetModification.LscDatasetModificationType.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,6 +60,7 @@ public class ScimDao {
     public static final String RESOURCES = "Resources";
     public static final String SCHEMAS = "schemas";
     public static final String ID = "id";
+    public static final String ATTRIBUTES_PARAM = "attributes";
     public static final String TYPE_ATTRIBUTE = "type";
     public static final String DISPLAY_ATTRIBUTE = "display";
     public static final String VALUE_ATTRIBUTE = "value";
@@ -145,7 +145,7 @@ public class ScimDao {
             }
             String pivotName = getPivotName();
             String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
-            currentTarget = currentTarget.queryParam("attributes", pivotFetchedAttrs);
+            currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
             LOGGER.debug(String.format("Retrieve %s list from: %s ", entity, currentTarget.getUri().toString()));
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {
@@ -178,7 +178,7 @@ public class ScimDao {
         try {
             WebTarget currentTarget = target.path(entity).path(id);
             if (attributes.isPresent()) {
-                currentTarget = currentTarget.queryParam("attributes", attributes.get());
+                currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, attributes.get());
             }
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
@@ -212,7 +212,7 @@ public class ScimDao {
             WebTarget currentTarget = target.path(entity);
             currentTarget = currentTarget.queryParam("filter", buildPivotFilter(pivotValue));
             if (attributes.isPresent()) {
-                currentTarget = currentTarget.queryParam("attributes", attributes.get());
+                currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, attributes.get());
             }
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
@@ -323,30 +323,10 @@ public class ScimDao {
                     operation = OperationType.REPLACE.getName();
                     break;
                 }
-                String path = replaceAlias(diff.getAttributeName());
-                Object value = getFirstValueAsString(diff.getValues());
-                if (isMultivaluedAttribute(diff.getAttributeName()) && !diff.getOperation().equals(DELETE_VALUES)) {
-                    path = getMultivaluedAttributeName(diff.getAttributeName());
-                    String attrIdx = getMultivaluedAttributeIndex(diff.getAttributeName());
-                    if (StringUtils.isBlank(attrIdx)) {
-                        // Simple multivalue
-                        value = stringValuesToJsonValues(diff.getValues());
-                    } else {
-                        // Multivalue with path
-                        if (hasValue(lm.getDestinationBean(), diff.getAttributeName())) {
-                            path = (!diff.getOperation().equals(REPLACE_VALUES))?path:replaceAlias(diff.getAttributeName()).concat(".").concat(VALUE_ATTRIBUTE);
-                            value = getFirstValueAsString(diff.getValues());
-                            operation = OperationType.REPLACE.getName();
-                        } else {
-                            value = new ArrayList<>();
-                            ((List<Object>)value).add(new ValueType(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));
-                            operation = OperationType.ADD.getName();
-                        }
-                    }
+                if (operation!=null) {
+                    ScimPathOperation op = createOperation(operation, diff, lm);
+                    patchOp.addOperations(op);
                 }
-                LOGGER.debug(String.format("op: %s, name: %s, value: %s", diff.getOperation(), path, value));
-                ScimPathOperation op = new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
-                patchOp.addOperations(op);
             }
             if (!patchOp.getOperations().isEmpty()) {
                 String patchOpJson = mapper.writeValueAsString(patchOp);
@@ -369,6 +349,33 @@ public class ScimDao {
             }
         }
         return result;
+    }
+
+    private ScimPathOperation createOperation(String operation, LscDatasetModification diff, LscModifications lm) {
+        String path = replaceAlias(diff.getAttributeName());
+        Object value = getFirstValueAsString(diff.getValues());
+        if (isMultivaluedAttribute(diff.getAttributeName()) && !diff.getOperation().equals(DELETE_VALUES)) {
+            path = getMultivaluedAttributeName(diff.getAttributeName());
+            String attrIdx = getMultivaluedAttributeIndex(diff.getAttributeName());
+            if (StringUtils.isBlank(attrIdx)) {
+                // Simple multivalue
+                value = stringValuesToJsonValues(diff.getValues());
+            } else {
+                // Multivalue with path
+                if (hasValue(lm.getDestinationBean(), diff.getAttributeName())) {
+                    path = (!diff.getOperation().equals(REPLACE_VALUES))?path:replaceAlias(diff.getAttributeName()).concat(".").concat(VALUE_ATTRIBUTE);
+                    value = getFirstValueAsString(diff.getValues());
+                    operation = OperationType.REPLACE.getName();
+                } else {
+                    value = new ArrayList<>();
+                    ((List<Object>)value).add(new ValueType(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));
+                    operation = OperationType.ADD.getName();
+                }
+            }
+        }
+        LOGGER.debug(String.format("op: %s, name: %s, value: %s", diff.getOperation(), path, value));
+        ScimPathOperation op = new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
+        return op;
     }
 
     public boolean delete(String pivotValue) throws LscServiceException {
