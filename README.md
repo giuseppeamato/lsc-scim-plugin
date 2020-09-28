@@ -1,7 +1,7 @@
 # SCIM2 LSC Plugin
 
 [![Build Status](https://travis-ci.org/giuseppeamato/lsc-scim-plugin.svg?branch=master)](https://travis-ci.org/giuseppeamato/lsc-scim-plugin)
-[![codecov](https://codecov.io/gh/TechnionYP5777/project-name/branch/master/graph/badge.svg)](https://codecov.io/gh/TechnionYP5777/project-name)
+[![codecov](https://codecov.io/gh/giuseppeamato/lsc-scim-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/giuseppeamato/lsc-scim-plugin)
 
 A SCIM2 plugin connector for LSC (LDAP Synchronization Connector)
 
