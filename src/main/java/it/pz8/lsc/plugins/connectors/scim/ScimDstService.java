@@ -39,9 +39,9 @@ public class ScimDstService implements IWritableService {
     private final ScimDao dao;
 
     @SuppressWarnings("unchecked")
-    public ScimDstService(final TaskType task) throws LscServiceConfigurationException, LscServiceCommunicationException {
+    public ScimDstService(final TaskType task) throws LscServiceConfigurationException {
         try {
-            if (task.getPluginDestinationService().getAny() == null || task.getPluginDestinationService().getAny().size() != 1 || !((task.getPluginDestinationService().getAny().get(0) instanceof ScimServiceSettings))) {
+            if (task.getPluginDestinationService().getAny() == null || task.getPluginDestinationService().getAny().size() != 1 || !(task.getPluginDestinationService().getAny().get(0) instanceof ScimServiceSettings)) {
                 throw new LscServiceConfigurationException("Unable to identify the scim service configuration inside the plugin source node of the task: " + task.getName());
             }
             settings = (ScimServiceSettings) task.getPluginDestinationService().getAny().get(0);
@@ -61,19 +61,21 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-        LOGGER.debug(String.format("Call to getListPivots"));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Call to getListPivots");
+        }
         try {
             return dao.getList();
         } catch (Exception e) {
-            LOGGER.error(String.format("Error while getting pivot list (%s)", e));
-            LOGGER.debug(e.toString(), e);
-            throw new LscServiceCommunicationException(e);
+            throw new LscServiceCommunicationException(String.format("Error while getting pivot list (%s)", e), e);
         }
     }
 
     @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-        LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
+        }
         String pivotName = dao.getPivotName();
         String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
         try {
@@ -85,16 +87,14 @@ public class ScimDstService implements IWritableService {
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
-            LOGGER.debug(String.format("id %s not found", pivotValue));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("id %s not found", pivotValue));
+            }
             return null;
         } catch (ProcessingException | WebApplicationException e) {
-            LOGGER.error(String.format("Exception while getting bean with id %s (%s)", pivotValue, e));
-            LOGGER.error(e.toString(), e);
-            throw new LscServiceException(e);
+            throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", pivotValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {
-            LOGGER.error("Bad class name: " + beanClass.getName() + "(" + e + ")");
-            LOGGER.debug(e.toString(), e);
-            throw new LscServiceException(e);
+            throw new LscServiceException(String.format("Bad class name: %s", e), e);
         }
     }
 
@@ -112,15 +112,21 @@ public class ScimDstService implements IWritableService {
                     result = true;
                     break;
                 case CREATE_OBJECT:
-                    LOGGER.debug("Creating SCIM entry: " + lm.getMainIdentifier());
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(String.format("Creating SCIM entry: %s", lm.getMainIdentifier()));
+                    }
                     result = dao.create(lm);
                     break;
                 case UPDATE_OBJECT:
-                    LOGGER.debug("Updating SCIM entry: " + lm.getMainIdentifier());
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(String.format("Updating SCIM entry: %s", lm.getMainIdentifier()));
+                    }
                     result = dao.update(lm);
                     break;
                 case DELETE_OBJECT:
-                    LOGGER.debug("Deleting SCIM entry: " + lm.getMainIdentifier());
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(String.format("Deleting SCIM entry: %s", lm.getMainIdentifier()));
+                    }
                     dao.delete(lm.getMainIdentifier());
                     result = true;
                     break;
@@ -131,11 +137,9 @@ public class ScimDstService implements IWritableService {
             }
         } catch (NotFoundException e) {
             LOGGER.error(String.format("NotFoundException while writing (%s)", e));
-            LOGGER.debug(e.toString(), e);
             result = false;
         } catch (ProcessingException e) {
             LOGGER.error(String.format("ProcessingException while writing (%s)", e));
-            LOGGER.debug(e.toString(), e);
             result = false;
         }
         return result;
@@ -143,7 +147,9 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public List<String> getWriteDatasetIds() {
-        LOGGER.debug(String.format("Call to getWriteDatasetIds()"));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Call to getWriteDatasetIds()");
+        }
         return settings.getWritableAttributes().getString();
     }
 
