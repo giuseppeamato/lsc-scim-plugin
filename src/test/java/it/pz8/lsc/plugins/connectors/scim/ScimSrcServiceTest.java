@@ -17,6 +17,7 @@ import org.lsc.configuration.PluginDestinationServiceType;
 import org.lsc.configuration.PluginSourceServiceType;
 import org.lsc.configuration.ServiceType;
 import org.lsc.configuration.TaskType;
+import org.lsc.exception.LscServiceConfigurationException;
 import org.lsc.exception.LscServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +90,12 @@ class ScimSrcServiceTest {
     @Test
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginSourceService.getAny()).thenReturn(null);
-        ScimSrcService testSrcService = new ScimSrcService(task);
+        ScimSrcService testSrcService;
+        try {
+            testSrcService = new ScimSrcService(task);
+        } catch (LscServiceConfigurationException e) {
+            testSrcService = null;
+        }
         assertThat(testSrcService).isNull();
         when(pluginSourceService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
     }
