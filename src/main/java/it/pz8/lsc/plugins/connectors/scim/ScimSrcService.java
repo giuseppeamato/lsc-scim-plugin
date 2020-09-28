@@ -42,7 +42,7 @@ public class ScimSrcService implements IService {
     @SuppressWarnings("unchecked")
     public ScimSrcService(final TaskType task) throws LscServiceConfigurationException {
         try {
-            if (task.getPluginSourceService().getAny() == null || task.getPluginSourceService().getAny().size() != 1 || !((task.getPluginSourceService().getAny().get(0) instanceof ScimServiceSettings))) {
+            if (task.getPluginSourceService().getAny() == null || task.getPluginSourceService().getAny().size() != 1 || !(task.getPluginSourceService().getAny().get(0) instanceof ScimServiceSettings)) {
                 throw new LscServiceConfigurationException("Unable to identify the scim service configuration inside the plugin source node of the task: " + task.getName());
             }
             ScimServiceSettings settings = (ScimServiceSettings)task.getPluginSourceService().getAny().get(0);
@@ -62,20 +62,20 @@ public class ScimSrcService implements IService {
 
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-        LOGGER.debug(String.format("Call to getListPivots"));
+        LOGGER.debug("Call to getListPivots");
         try {
             return dao.getList();
         } catch (Exception e) {
-            LOGGER.error(String.format("Error while getting pivot list (%s)", e));
-            LOGGER.debug(e.toString(), e);
-            throw new LscServiceCommunicationException(e);
+            throw new LscServiceCommunicationException(String.format("Error while getting pivot list (%s)", e), e);
         }
     }
 
     @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-        LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
-        if (lscDatasets.getAttributesNames().size() < 1) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
+        }
+        if (lscDatasets.getAttributesNames().isEmpty()) {
             return null;
         }
         if (fromSameService) {
@@ -101,13 +101,9 @@ public class ScimSrcService implements IService {
             LOGGER.debug(String.format("id %s not found", idValue));
             return null;
         } catch (ProcessingException | WebApplicationException e) {
-            LOGGER.error(String.format("Exception while getting bean with id %s (%s)", idValue, e));
-            LOGGER.error(e.toString(), e);
-            throw new LscServiceException(e);
+            throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", idValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {
-            LOGGER.error("Bad class name: " + beanClass.getName() + "(" + e + ")");
-            LOGGER.debug(e.toString(), e);
-            throw new LscServiceException(e);
+            throw new LscServiceException(String.format("Bad class name: %s (%s)", beanClass.getName(), e), e);
         }
     }
 
@@ -117,7 +113,7 @@ public class ScimSrcService implements IService {
             Optional<Entry<String, LscDatasets>> entity = dao.findFirstByPivot(pivotValue);
             if (entity.isPresent()) {
                 IBean bean = beanClass.newInstance();
-                bean.setMainIdentifier(entity.get().getKey().toString());
+                bean.setMainIdentifier(entity.get().getKey());
                 bean.setDatasets(entity.get().getValue());
                 return bean;
             } else {
@@ -127,13 +123,9 @@ public class ScimSrcService implements IService {
             LOGGER.debug(String.format("%s %s not found", pivotName, pivotValue));
             return null;
         } catch (ProcessingException | WebApplicationException e) {
-            LOGGER.error(String.format("Exception while getting bean %s/%s (%s)", pivotName, pivotValue, e));
-            LOGGER.error(e.toString(), e);
-            throw new LscServiceException(e);
+            throw new LscServiceException(String.format("Exception while getting bean %s/%s (%s)", pivotName, pivotValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {
-            LOGGER.error("Bad class name: " + beanClass.getName() + "(" + e + ")");
-            LOGGER.debug(e.toString(), e);
-            throw new LscServiceException(e);
+            throw new LscServiceException(String.format("Bad class name: %s (%s) ", beanClass.getName(), e), e);
         }
     }
 
