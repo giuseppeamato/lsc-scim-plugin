@@ -49,6 +49,7 @@ class ScimSrcServiceTest {
     private static GenericContainer<?> wso2ids;
 
     private static TaskType task;
+    private static ServiceType.Connection connection;
     private static ScimServiceSettings serviceSettings;
     private static PluginSourceServiceType pluginSourceService;
     private static PluginDestinationServiceType pluginDestinationService;
@@ -68,7 +69,7 @@ class ScimSrcServiceTest {
         serviceSettings = mock(ScimServiceSettings.class);
         task = mock(TaskType.class);
         PluginConnectionType connectionType = mock(PluginConnectionType.class);
-        ServiceType.Connection connection = mock(ServiceType.Connection.class);
+        connection = mock(ServiceType.Connection.class);
 
         when(connectionType.getUrl()).thenReturn(String.format(BASEPATH, mappedPort));
         when(connectionType.getUsername()).thenReturn(USERNAME);
@@ -123,7 +124,7 @@ class ScimSrcServiceTest {
             testSrcService = null;
         }
         assertThat(testSrcService).isNull();
-        
+        when(pluginSourceService.getConnection()).thenReturn(connection);
     }
     
     @Test
