@@ -109,6 +109,13 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
+        when(pluginSourceService.getConnection().getReference()).thenReturn(null);
+        ScimSrcService testSrcService = new ScimSrcService(task);
+        assertThat(testSrcService).isNull();
+    }
+    
+    @Test
     void listPivotShouldReturnEmptyWhenNoResult() throws LscServiceException {
         when(serviceSettings.getFilter()).thenReturn("id eq 'pippo'");
         when(serviceSettings.getPivot()).thenReturn(null);
