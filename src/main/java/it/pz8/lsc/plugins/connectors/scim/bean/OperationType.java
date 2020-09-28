@@ -24,7 +24,7 @@ public enum OperationType {
 
     public static OperationType getFromName(String name) {
         return Arrays.stream(OperationType.values())
-                .filter(op -> op.name().toLowerCase().equals(name.toLowerCase()))
+                .filter(op -> op.name().equalsIgnoreCase(name))
                 .findFirst().orElse(null);
     }
 
