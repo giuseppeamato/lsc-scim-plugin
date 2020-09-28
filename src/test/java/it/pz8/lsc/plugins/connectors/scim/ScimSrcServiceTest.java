@@ -50,6 +50,7 @@ class ScimSrcServiceTest {
 
     private static TaskType task;
     private static ServiceType.Connection connection;
+    private static PluginConnectionType connectionType; 
     private static ScimServiceSettings serviceSettings;
     private static PluginSourceServiceType pluginSourceService;
     private static PluginDestinationServiceType pluginDestinationService;
@@ -68,7 +69,7 @@ class ScimSrcServiceTest {
         pluginDestinationService = mock(PluginDestinationServiceType.class);
         serviceSettings = mock(ScimServiceSettings.class);
         task = mock(TaskType.class);
-        PluginConnectionType connectionType = mock(PluginConnectionType.class);
+        connectionType = mock(PluginConnectionType.class);
         connection = mock(ServiceType.Connection.class);
 
         when(connectionType.getUrl()).thenReturn(String.format(BASEPATH, mappedPort));
@@ -124,7 +125,7 @@ class ScimSrcServiceTest {
             testSrcService = null;
         }
         assertThat(testSrcService).isNull();
-        when(pluginSourceService.getConnection()).thenReturn(connection);
+        when(pluginSourceService.getConnection().getReference()).thenReturn(connectionType);
     }
     
     @Test
