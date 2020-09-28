@@ -32,7 +32,7 @@ import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
  * @author Giuseppe Amato
  *
  */
-public class ScimSrcServiceTest {
+class ScimSrcServiceTest {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ScimSrcServiceTest.class);
     
@@ -91,6 +91,7 @@ public class ScimSrcServiceTest {
         when(pluginSourceService.getAny()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
         assertThat(testSrcService).isNull();
+        when(pluginSourceService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
     }
     
     @Test
@@ -98,6 +99,7 @@ public class ScimSrcServiceTest {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         ScimSrcService testSrcService = new ScimSrcService(task);
         assertThat(testSrcService).isNull();
+        when(serviceSettings.getEntity()).thenReturn("Users");
     }
     
     @Test

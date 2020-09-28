@@ -46,7 +46,7 @@ import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
  *
  */
 @TestMethodOrder(OrderAnnotation.class)
-public class ScimDstServiceTest {
+class ScimDstServiceTest {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ScimDstServiceTest.class);
 
