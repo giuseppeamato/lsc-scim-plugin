@@ -87,6 +87,20 @@ public class ScimSrcServiceTest {
     }
     
     @Test
+    void constructorWithoutSettingsShouldFail() throws LscServiceException {
+        when(pluginSourceService.getAny()).thenReturn(null);
+        ScimSrcService testSrcService = new ScimSrcService(task);
+        assertThat(testSrcService).isNull();
+    }
+    
+    @Test
+    void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
+        when(serviceSettings.getEntity()).thenReturn("Utenti");
+        ScimSrcService testSrcService = new ScimSrcService(task);
+        assertThat(testSrcService).isNull();
+    }
+    
+    @Test
     void listPivotShouldReturnEmptyWhenNoResult() throws LscServiceException {
         when(serviceSettings.getFilter()).thenReturn("id eq 'pippo'");
         when(serviceSettings.getPivot()).thenReturn(null);
