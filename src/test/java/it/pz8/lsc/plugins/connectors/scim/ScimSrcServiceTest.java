@@ -103,7 +103,12 @@ class ScimSrcServiceTest {
     @Test
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
-        ScimSrcService testSrcService = new ScimSrcService(task);
+        ScimSrcService testSrcService;
+        try {
+            testSrcService = new ScimSrcService(task);
+        } catch (LscServiceConfigurationException e) {
+            testSrcService = null;
+        }
         assertThat(testSrcService).isNull();
         when(serviceSettings.getEntity()).thenReturn("Users");
     }
@@ -111,8 +116,14 @@ class ScimSrcServiceTest {
     @Test
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginSourceService.getConnection().getReference()).thenReturn(null);
-        ScimSrcService testSrcService = new ScimSrcService(task);
+        ScimSrcService testSrcService;
+        try {
+            testSrcService = new ScimSrcService(task);
+        } catch (LscServiceConfigurationException e) {
+            testSrcService = null;
+        }
         assertThat(testSrcService).isNull();
+        
     }
     
     @Test

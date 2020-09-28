@@ -27,7 +27,7 @@ import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.PluginDestinationServiceType;
 import org.lsc.configuration.ServiceType;
 import org.lsc.configuration.TaskType;
-import org.lsc.configuration.ValuesType;
+import org.lsc.exception.LscServiceConfigurationException;
 import org.lsc.exception.LscServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +85,7 @@ class ScimDstServiceTest {
         when(connectionType.getUrl()).thenReturn(String.format(BASEPATH, mappedPort));
         when(connectionType.getUsername()).thenReturn(USERNAME);
         when(connectionType.getPassword()).thenReturn(PASSWORD);
-        when(connection.getReference()).thenReturn(connectionType);  
+        when(connection.getReference()).thenReturn(connectionType);
         when(pluginDestinationService.getConnection()).thenReturn(connection);
         when(pluginDestinationService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
         when(serviceSettings.getEntity()).thenReturn("Users");
@@ -269,6 +269,47 @@ class ScimDstServiceTest {
         assertThat(result).isTrue();
         bean = testDstService.getBean("developer", lscDatasets, true);
         assertThat(bean).isNull();
+    }
+
+    @Test
+    @Order(10)
+    void constructorWithoutSettingsShouldFail() throws LscServiceException {
+        when(pluginDestinationService.getAny()).thenReturn(null);
+        ScimDstService testDstService;
+        try {
+            testDstService = new ScimDstService(task);
+        } catch (LscServiceConfigurationException e) {
+            testDstService = null;
+        }
+        assertThat(testDstService).isNull();
+        when(pluginDestinationService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
+    }
+    
+    @Test
+    @Order(11)
+    void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
+        when(serviceSettings.getEntity()).thenReturn("Utenti");
+        ScimDstService testDstService;
+        try {
+            testDstService = new ScimDstService(task);
+        } catch (LscServiceConfigurationException e) {
+            testDstService = null;
+        }
+        assertThat(testDstService).isNull();
+        when(serviceSettings.getEntity()).thenReturn("Users");
+    }
+
+    @Test
+    @Order(12)
+    void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
+        when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
+        ScimDstService testDstService;
+        try {        
+            testDstService = new ScimDstService(task);
+        } catch (LscServiceConfigurationException e) {
+            testDstService = null;
+        }
+        assertThat(testDstService).isNull();
     }
 
 }
