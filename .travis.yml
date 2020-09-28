@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - oraclejdk8
+  - openjdk8
 
 before_install:
     - wget https://github.com/giuseppeamato/lsc-scim-plugin/releases/download/v1.1.0/wso2ids.crt
