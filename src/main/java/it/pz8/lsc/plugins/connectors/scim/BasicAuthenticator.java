@@ -1,7 +1,7 @@
 package it.pz8.lsc.plugins.connectors.scim;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -30,11 +30,7 @@ public class BasicAuthenticator implements ClientRequestFilter {
 
     private String getBasicAuthentication() {
         String token = this.user + ":" + this.password;
-        try {
-            return "Basic " + DatatypeConverter.printBase64Binary(token.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException ex) {
-            throw new IllegalStateException("Cannot encode with UTF-8", ex);
-        }
+        return "Basic " + DatatypeConverter.printBase64Binary(token.getBytes(StandardCharsets.UTF_8));
     }
 
 }
