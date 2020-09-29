@@ -27,7 +27,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import ch.qos.logback.classic.Level;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
 
 /**
@@ -58,9 +57,6 @@ class ScimSrcServiceTest {
 
     @BeforeAll
     static void setup() throws Exception {
-        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-        root.setLevel(Level.DEBUG);
-        
         wso2ids = new GenericContainer<>(IMAGE_NAME);
         wso2ids.withExposedPorts(EXPOSED_PORT);
         wso2ids.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(TIMEOUT)));        
