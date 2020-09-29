@@ -2,11 +2,19 @@ language: java
 jdk:
   - openjdk8
 
+addons:
+  sonarcloud:
+    organization: "giuseppeamato"
+    token:
+      secure: rFxO8/uwIlJyYbp6wgpKan071ijUKIt1F0hKrxMlkNkgFeEXWzegifV7PnZ7rotP0ofaJRxWHYiX7QDZQmoRULLxa3cmENArbVXUUwtoeUQO+pMMY0jlHAQxwNprvhv+FYgGb/UOWbM1npvMyoJrVbZNQ/E26vcmc80UwIj6IyPqiA+xWBZ0+p8HPD+YcDAhurpxbbgJp90/e5rwJPdrIJsBXYodyYjkxC/r7ks5w2nohD/H9BpfX5O2DcaHEcpupLvmCQ4dhA8fA5Q0guakgGwt6Mf9BKjvzxB2szOvmsw+ssg9ejEUlnOzh4zhoj+xC3gFQl2E+C3hwOMgrVW0OU+c7hSN1K0ShFG4gW/I9DM+YrZBe+i7l+FxEtWBn4BVY73hW01L2tjJCg0ES/B22DvjnjUGdBY4NRFfSHkNI20YFB/iEKKqxSGeXz4MPAwxiof0drWj2uyHwclUidIC9DpQ8jKznLrYWia6NQGx3THJf+1G9RKfxj5a7P+EGBUfskx2qx1cQkVHfqxu4JagANNMUY0MLZY4AsRsPzDP87jygCscz9tDI63cWyoFHaCM+2zPBP5Z1SuE8Y2f+taAIa+HGt0Jmkyt64NyrSkHbNtyidlETP+IOq5kNE126vwmOUsq/5CgnsH0mfkeY3z6aWSJN6sZKnEWeiTiO3rEBSY=
+
 before_install:
     - wget https://github.com/giuseppeamato/lsc-scim-plugin/releases/download/v1.1.0/wso2ids.crt
     - sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/jre/lib/security/cacerts
 
-script: "mvn cobertura:cobertura"
+script:
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
