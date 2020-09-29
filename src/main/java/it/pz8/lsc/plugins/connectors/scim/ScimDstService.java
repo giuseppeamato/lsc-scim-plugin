@@ -61,9 +61,7 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Call to getListPivots");
-        }
+        LOGGER.debug("Call to getListPivots");
         try {
             return dao.getList();
         } catch (Exception e) {
@@ -87,9 +85,7 @@ public class ScimDstService implements IWritableService {
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("id %s not found", pivotValue));
-            }
+            LOGGER.debug(String.format("id %s not found", pivotValue));
             return null;
         } catch (ProcessingException | WebApplicationException e) {
             throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", pivotValue, e), e);
@@ -147,9 +143,7 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public List<String> getWriteDatasetIds() {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Call to getWriteDatasetIds()");
-        }
+        LOGGER.debug("Call to getWriteDatasetIds()");
         return settings.getWritableAttributes().getString();
     }
 

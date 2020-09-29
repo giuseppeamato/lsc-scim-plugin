@@ -88,9 +88,7 @@ public class ScimDao {
     private ObjectMapper mapper;
 
     public ScimDao(PluginConnectionType connection, ScimServiceSettings settings) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Init service");
-        }
+        LOGGER.debug("Init service");
         mapper = new ObjectMapper();
         this.entity = settings.getEntity();
         this.sourcePivot = getStringParameter(settings.getSourcePivot());
