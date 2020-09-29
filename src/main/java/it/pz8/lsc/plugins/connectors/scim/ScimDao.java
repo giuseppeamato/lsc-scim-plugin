@@ -88,7 +88,9 @@ public class ScimDao {
     private ObjectMapper mapper;
 
     public ScimDao(PluginConnectionType connection, ScimServiceSettings settings) {
-        LOGGER.debug("Init service");
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Init service");
+        }
         mapper = new ObjectMapper();
         this.entity = settings.getEntity();
         this.sourcePivot = getStringParameter(settings.getSourcePivot());
@@ -146,7 +148,9 @@ public class ScimDao {
             String pivotName = getPivotName();
             String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
             currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
-            LOGGER.debug(String.format("Retrieve %s list from: %s ", entity, currentTarget.getUri().toString()));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Retrieve %s list from: %s ", entity, currentTarget.getUri().toString()));
+            }
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {
                 String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
@@ -183,7 +187,9 @@ public class ScimDao {
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
             }
-            LOGGER.debug(String.format("Retrieve %s detail from: %s ", getEntityName(), currentTarget.getUri().toString()));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Retrieve %s detail from: %s ", getEntityName(), currentTarget.getUri().toString()));
+            }
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -217,7 +223,9 @@ public class ScimDao {
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
             }
-            LOGGER.debug(String.format("Retrieve %s detail from: %s ", getEntityName(), currentTarget.getUri().toString()));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Retrieve %s detail from: %s ", getEntityName(), currentTarget.getUri().toString()));
+            }
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {              
                 String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
@@ -225,7 +233,9 @@ public class ScimDao {
                 throw new ProcessingException(errorMessage);
             }
             Map<String, Object> results = mapper.readValue(response.readEntity(String.class), Map.class);
-            LOGGER.debug(String.format("SCIM Response :\r%n%s", results));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("SCIM Response :\r%n%s", results));
+            }
             if (results!=null && results.get(RESOURCES)!=null) {
                 List<Map> resourcesMap = (List)results.get(RESOURCES);
                 switch (resourcesMap.size()) {
@@ -240,7 +250,9 @@ public class ScimDao {
             } else {
                 throw new NotFoundException(String.format("%s %s cannot be found", getEntityName(), pivotValue));
             }
-            LOGGER.debug(String.format("Details :\r%n%s", detail));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Details :\r%n%s", detail));
+            }            
         } catch (JsonProcessingException e) {
             throw new LscServiceException(e);
         } finally {
@@ -260,7 +272,9 @@ public class ScimDao {
         boolean result = false;
         try {
             WebTarget currentTarget = target.path(entity);
-            LOGGER.debug(String.format("Create %s in: %s \r%n[%s]", getEntityName(), currentTarget.getUri().toString(), lm));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Create %s in: %s \r%n[%s]", getEntityName(), currentTarget.getUri().toString(), lm));
+            }
             Map<String, Object> entityattributes = new HashMap<>();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             entityattributes.put(SCHEMAS, new ArrayList<String>());
@@ -307,7 +321,9 @@ public class ScimDao {
             String id = getPivotName().equalsIgnoreCase(ID)?lm.getMainIdentifier():findFirstByPivot(lm.getMainIdentifier())
                     .map(entry -> entry.getValue().getStringValueAttribute(ID)).orElseThrow(() -> new LscServiceException("ID not found"));
             WebTarget currentTarget = target.path(entity).path(id);
-            LOGGER.debug(String.format("Update %s in: %s ", getEntityName(), currentTarget.getUri().toString()));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Update %s in: %s ", getEntityName(), currentTarget.getUri().toString()));
+            }
             ScimPatchResource patchOp = new ScimPatchResource();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             for (LscDatasetModification diff : diffs) {
@@ -373,7 +389,9 @@ public class ScimDao {
                 }
             }
         }
-        LOGGER.debug(String.format("op: %s, name: %s, value: %s", diff.getOperation(), path, value));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("op: %s, name: %s, value: %s", diff.getOperation(), path, value));
+        }
         ScimPathOperation op = new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
         return op;
     }
@@ -385,7 +403,9 @@ public class ScimDao {
             String id = getPivotName().equalsIgnoreCase(ID)?pivotValue:findFirstByPivot(pivotValue)
                     .map(entry -> entry.getValue().getStringValueAttribute(ID)).orElseThrow(() -> new LscServiceException("ID not found"));
             WebTarget currentTarget = target.path(entity).path(id);
-            LOGGER.debug(String.format("Delete %s from: %s ", getEntityName(), currentTarget.getUri().toString()));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Delete %s from: %s ", getEntityName(), currentTarget.getUri().toString()));
+            }
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).delete();
             if (!checkResponse(response)) {
                 String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
