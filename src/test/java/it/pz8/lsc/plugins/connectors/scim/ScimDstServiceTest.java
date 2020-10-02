@@ -314,13 +314,4 @@ class ScimDstServiceTest {
         assertThat(testDstService).isNull();
     }
 
-    @Test
-    @Order(13)
-    void getListPivots() throws LscServiceException {
-        when(pluginDestinationService.getConnection().getReference()).thenReturn(connectionType);
-        testDstService = new ScimDstService(task);
-        Map<String, LscDatasets> bean = testDstService.getListPivots();
-        assertThat(bean).isNotNull();
-        assertThat(bean.size()).isPositive();
-    }
 }
