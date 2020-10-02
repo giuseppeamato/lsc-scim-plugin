@@ -21,8 +21,7 @@ Run LSC with flag **-DLSC.PLUGINS.PACKAGEPATH=it.pz8.lsc.plugins.connectors.scim
 
 **Build note**:
 The test phase of build process is docker container based, test units connects via https 
-to the services exposed by them, so you must include [this SSL certificate](wso2ids.crt) into your Java 
-truststore (cacerts file).
+to the services exposed by them, so you must include [this SSL certificate](wso2ids.crt) into your Java truststore (cacerts file).
 
 
 ## Configuration
