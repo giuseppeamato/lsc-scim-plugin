@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.naming.NamingException;
 
@@ -62,6 +63,7 @@ class ScimDstServiceTest {
 
     private static TaskType task;
     private static ScimServiceSettings serviceSettings;
+    private static PluginConnectionType connectionType;
     private static PluginDestinationServiceType pluginDestinationService;
     private static ScimDstService testDstService;
 
@@ -79,7 +81,7 @@ class ScimDstServiceTest {
         pluginDestinationService = mock(PluginDestinationServiceType.class);
         serviceSettings = mock(ScimServiceSettings.class);
         task = mock(TaskType.class);
-        PluginConnectionType connectionType = mock(PluginConnectionType.class);
+        connectionType = mock(PluginConnectionType.class);
         ServiceType.Connection connection = mock(ServiceType.Connection.class);
 
         when(connectionType.getUrl()).thenReturn(String.format(BASEPATH, mappedPort));
@@ -312,4 +314,13 @@ class ScimDstServiceTest {
         assertThat(testDstService).isNull();
     }
 
+    @Test
+    @Order(13)
+    void getListPivots() throws LscServiceException {
+        when(pluginDestinationService.getConnection().getReference()).thenReturn(connectionType);
+        testDstService = new ScimDstService(task);
+        Map<String, LscDatasets> bean = testDstService.getListPivots();
+        assertThat(bean).isNotNull();
+        assertThat(bean.size()).isPositive();
+    }
 }
