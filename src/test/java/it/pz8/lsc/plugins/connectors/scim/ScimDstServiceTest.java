@@ -119,6 +119,15 @@ class ScimDstServiceTest {
     
     @Test
     @Order(1)
+    void getListPivots() throws LscServiceException {
+        testDstService = new ScimDstService(task);
+        Map<String, LscDatasets> bean = testDstService.getListPivots();
+        assertThat(bean).isNotNull();
+        assertThat(bean.size()).isPositive();
+    }
+    
+    @Test
+    @Order(1)
     void addUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
