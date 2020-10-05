@@ -16,7 +16,7 @@ public class ScimValueOperation extends ScimOperation implements Serializable {
 
     public ScimValueOperation(String op, String name, Object value)  {
         this.op = op;
-        pair = new HashMap<String, Object>();
+        pair = new HashMap<>();
         pair.put(name, value);
     }
 

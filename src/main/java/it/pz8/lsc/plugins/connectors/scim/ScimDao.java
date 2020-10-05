@@ -66,6 +66,8 @@ public class ScimDao {
     public static final String VALUE_ATTRIBUTE = "value";
     protected static final String[] MULTIVALUE_ATTRS_SELECTORS = {TYPE_ATTRIBUTE, DISPLAY_ATTRIBUTE};
     public static final String EQ_OPERATOR = " eq ";
+    private static final String HTTP_STATUS_TPL_MSG = "status: %d, message: %s";
+    
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
 
@@ -151,7 +153,7 @@ public class ScimDao {
             }
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {
-                String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
+                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
                 LOGGER.error(errorMessage);
                 throw new LscServiceException(errorMessage);
             }
@@ -175,7 +177,7 @@ public class ScimDao {
         return resources;
     }
 
-    public Map<String, Object> getDetails(String id) throws LscServiceException {
+    public Map<String, Object> getDetails(String id) {
         Response response = null;
         try {
             WebTarget currentTarget = target.path(entity).path(id);
@@ -193,7 +195,7 @@ public class ScimDao {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                     throw new NotFoundException(String.format("%s %s cannot be found", getEntityName(), id));
                 }                
-                String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
+                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
                 LOGGER.error(errorMessage);
                 throw new ProcessingException(errorMessage);
             }
@@ -226,7 +228,7 @@ public class ScimDao {
             }
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {              
-                String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
+                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
                 LOGGER.error(errorMessage);
                 throw new ProcessingException(errorMessage);
             }
@@ -238,7 +240,7 @@ public class ScimDao {
                 List<Map> resourcesMap = (List)results.get(RESOURCES);
                 switch (resourcesMap.size()) {
                 case 0:
-                    throw new NotFoundException(String.format("%s %s cannot be found", getEntityName(), pivotValue));
+                    throw new NotFoundException(String.format("%s %s cannot be found by pivot", getEntityName(), pivotValue));
                 case 1:
                     detail = flatten(mapper.writeValueAsString(resourcesMap.get(0)));
                     break;
@@ -246,7 +248,7 @@ public class ScimDao {
                     throw new LscServiceException(String.format("Multiple results for %s %s", getEntityName(), pivotValue));
                 }
             } else {
-                throw new NotFoundException(String.format("%s %s cannot be found", getEntityName(), pivotValue));
+                throw new NotFoundException(String.format("%s %s no results found", getEntityName(), pivotValue));
             }
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(String.format("Details :\r%n%s", detail));
@@ -336,6 +338,8 @@ public class ScimDao {
                 case REPLACE_VALUES:
                     operation = OperationType.REPLACE.getName();
                     break;
+                case UNKNOWN:
+                    break;
                 }
                 if (operation!=null) {
                     ScimPathOperation op = createOperation(operation, diff, lm);
@@ -390,8 +394,7 @@ public class ScimDao {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("op: %s, name: %s, value: %s", diff.getOperation(), path, value));
         }
-        ScimPathOperation op = new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
-        return op;
+        return new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
     }
 
     public boolean delete(String pivotValue) throws LscServiceException {
@@ -406,7 +409,7 @@ public class ScimDao {
             }
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).delete();
             if (!checkResponse(response)) {
-                String errorMessage = String.format("status: %d, message: %s", response.getStatus(), response.readEntity(String.class));
+                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
                 LOGGER.error(errorMessage);
             } else {
                 result = true;

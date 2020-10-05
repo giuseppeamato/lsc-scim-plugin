@@ -61,7 +61,7 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-        LOGGER.debug("Call to getListPivots");
+        LOGGER.debug("Call to Destination getListPivots");
         try {
             return dao.getList();
         } catch (Exception e) {

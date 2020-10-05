@@ -125,9 +125,33 @@ class ScimDstServiceTest {
         assertThat(bean).isNotNull();
         assertThat(bean.size()).isPositive();
     }
+
+    @Test
+    @Order(2)
+    void changeIdShouldNotFail() throws LscServiceException {
+        testDstService = new ScimDstService(task);
+        LscModifications mod = new LscModifications(LscModificationType.CHANGE_ID);
+        mod.setMainIdentifer("pippo");
+        boolean result = testDstService.apply(mod);
+        assertThat(result).isTrue();
+    }
     
     @Test
     @Order(2)
+    void modificationWithoutMainIdShouldFail() throws LscServiceException {
+        testDstService = new ScimDstService(task);
+        LscModifications mod = new LscModifications(LscModificationType.CHANGE_ID);
+        boolean result = testDstService.apply(mod);
+        assertThat(result).isFalse();
+    }
+    
+    //TODO
+    // CREATE MULTIVALUE WITH PATH
+    // UPDATE MULTIVALUE WITH PATH
+    // UPDATE ADD_VALUES 
+    
+    @Test
+    @Order(3)
     void addUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
@@ -147,7 +171,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     void updateNestedAttribute() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
@@ -163,7 +187,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     void updateMultivalueAttribute() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -181,7 +205,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     void updateMultivalueWithPathAttribute() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -199,7 +223,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(6)
+    @Order(7)
     void updateExtendedSchemaAttribute() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
@@ -215,7 +239,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(7)
+    @Order(8)
     void removeUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -231,7 +255,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(8)
+    @Order(9)
     void addGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -250,7 +274,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(9)
+    @Order(10)
     void updateMembership() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
@@ -267,7 +291,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(10)
+    @Order(11)
     void removeGroup() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -283,7 +307,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getAny()).thenReturn(null);
         ScimDstService testDstService;
@@ -297,7 +321,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(12)
+    @Order(13)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         ScimDstService testDstService;
@@ -311,7 +335,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
         ScimDstService testDstService;

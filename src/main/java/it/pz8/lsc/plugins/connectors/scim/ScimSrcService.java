@@ -62,7 +62,7 @@ public class ScimSrcService implements IService {
 
     @Override
     public Map<String, LscDatasets> getListPivots() throws LscServiceException {
-        LOGGER.debug("Call to getListPivots");
+        LOGGER.debug("Call to Source getListPivots");
         try {
             return dao.getList();
         } catch (Exception e) {
