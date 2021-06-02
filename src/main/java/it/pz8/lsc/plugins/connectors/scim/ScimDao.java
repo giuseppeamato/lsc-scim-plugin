@@ -67,7 +67,7 @@ public class ScimDao {
     protected static final String[] MULTIVALUE_ATTRS_SELECTORS = {TYPE_ATTRIBUTE, DISPLAY_ATTRIBUTE};
     public static final String EQ_OPERATOR = " eq ";
     private static final String HTTP_STATUS_TPL_MSG = "status: %d, message: %s";
-    
+    private static final int PAGESIZE_DEFAULT_VALUE = 0;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
 
@@ -139,34 +139,40 @@ public class ScimDao {
             if (computedFilter.isPresent()) {
                 currentTarget = currentTarget.queryParam("filter", computedFilter.get());
             }
-            if (pageSize.isPresent()) {
-                currentTarget = currentTarget.queryParam("startIndex", 1);
-            }
-            if (pageSize.isPresent()) {
-                currentTarget = currentTarget.queryParam("count", pageSize.get());
-            }
             String pivotName = getPivotName();
             String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
             currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Retrieve %s list from: %s ", entity, currentTarget.getUri().toString()));
-            }
-            response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
-            if (!checkResponse(response)) {
-                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
-                LOGGER.error(errorMessage);
-                throw new LscServiceException(errorMessage);
-            }
-            Map<String, Object> results = mapper.readValue(response.readEntity(String.class), Map.class);
-            if (results!=null && results.get(RESOURCES)!=null) {
-                List<Map> resourcesMap = (List)results.get(RESOURCES);
-                for (Map resource : resourcesMap) {
-                    LscDatasets datasets = new LscDatasets();
-                    datasets.put(ID, resource.get(ID));
-                    pivot.ifPresent(p -> datasets.put(p, resource.get(p)));
-                    resources.put(resource.get(pivotName).toString(), datasets);
+            
+            int resultsPerPage = pageSize.orElse(PAGESIZE_DEFAULT_VALUE); 
+            Map<String, Object> results = null;
+            int startIndex = 1;
+            do {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
                 }
-            }
+                if (resultsPerPage > 0) {
+                    currentTarget = currentTarget.queryParam("startIndex", startIndex);
+                    currentTarget = currentTarget.queryParam("count", resultsPerPage);
+                }
+                response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
+                if (!checkResponse(response)) {
+                    String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
+                    LOGGER.error(errorMessage);
+                    throw new LscServiceException(errorMessage);
+                }
+                results = mapper.readValue(response.readEntity(String.class), Map.class);
+                if (results!=null && results.get(RESOURCES)!=null) {
+                    List<Map> resourcesMap = (List)results.get(RESOURCES);
+                    for (Map resource : resourcesMap) {
+                        LscDatasets datasets = new LscDatasets();
+                        datasets.put(ID, resource.get(ID));
+                        pivot.ifPresent(p -> datasets.put(p, resource.get(p)));
+                        resources.put(resource.get(pivotName).toString(), datasets);
+                    }
+                }
+                startIndex = startIndex + resultsPerPage;
+            } while (results != null);
+
         } catch (JsonProcessingException e) {
             throw new LscServiceException(e);
         } finally {
