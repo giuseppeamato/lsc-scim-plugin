@@ -4,7 +4,7 @@
 
     <groupId>it.pz8.lsc.plugins.connectors</groupId>
     <artifactId>scim</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <name>LSC SCIM2 Synchronization Connector</name>
     <url></url>
         
