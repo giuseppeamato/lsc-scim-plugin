@@ -9,10 +9,6 @@ A SCIM2 plugin connector for LSC (LDAP Synchronization Connector)
 ## Goal
 The object of this plugin is to synchronize users and groups between an identity server supporting SCIM2 protocol and another LSC compatible source/destination. For example it can be used to synchronize users from a WSO2 Identity Server user store to an application database.
 
-**Note**:
-<em>The destination service is still experimental</em>, although mostly working, because of some bugs in my SCIM provider reference implementation (WSO2 IdS). 
-I'll test this plugin with other SCIM compliant identity servers in the near future.
-
 ## Installation
 
 Download the latest distibution asset or build it with maven and upload the jar into LSC lib 
@@ -22,7 +18,6 @@ Run LSC with flag **-DLSC.PLUGINS.PACKAGEPATH=it.pz8.lsc.plugins.connectors.scim
 **Build note**
 The test phase of build process is docker container based, test units connects via https 
 to the services exposed by them, so you must include [this SSL certificate](wso2ids.crt) into your Java truststore (cacerts file).
-
 
 ## Configuration
 
