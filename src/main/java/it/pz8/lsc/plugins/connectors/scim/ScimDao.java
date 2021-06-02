@@ -173,6 +173,8 @@ public class ScimDao {
                         pivot.ifPresent(p -> datasets.put(p, resource.get(p)));
                         resources.put(resource.get(pivotName).toString(), datasets);
                     }
+                } else {
+                    hasFinished = true;
                 }
                 startIndex = startIndex + resultsPerPage;
             } while (!hasFinished);
