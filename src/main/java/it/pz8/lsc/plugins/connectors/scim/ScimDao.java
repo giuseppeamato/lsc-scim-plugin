@@ -146,7 +146,7 @@ public class ScimDao {
             int resultsPerPage = pageSize.orElse(PAGESIZE_DEFAULT_VALUE); 
             Map<String, Object> results = null;
             int startIndex = 1;
-            boolean hasResults = false;
+            boolean hasFinished = false;
             do {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
@@ -164,8 +164,8 @@ public class ScimDao {
                 results = mapper.readValue(response.readEntity(String.class), Map.class);
                 if (results!=null && results.get(RESOURCES)!=null) {
                     List<Map> resourcesMap = (List)results.get(RESOURCES);
-                    if (!resourcesMap.isEmpty()) {
-                        hasResults = true;
+                    if (resourcesMap.isEmpty() || resultsPerPage == 0) {
+                        hasFinished = true;
                     }
                     for (Map resource : resourcesMap) {
                         LscDatasets datasets = new LscDatasets();
@@ -175,7 +175,7 @@ public class ScimDao {
                     }
                 }
                 startIndex = startIndex + resultsPerPage;
-            } while (hasResults);
+            } while (!hasFinished);
 
         } catch (JsonProcessingException e) {
             throw new LscServiceException(e);
