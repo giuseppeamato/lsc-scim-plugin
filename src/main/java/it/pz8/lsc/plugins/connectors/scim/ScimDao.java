@@ -101,7 +101,7 @@ public class ScimDao {
         this.excludedAttributes = getStringParameter(settings.getExcludedAttributes());
         this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
         this.namespaces = settings.getSchema()!=null?settings.getSchema().getNamespace():new ArrayList<>();
-        
+
         Client client = ClientBuilder.newClient().property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
                 .register(new BasicAuthenticator(connection.getUsername() , connection.getPassword()));
         target = client.target(connection.getUrl());
@@ -132,22 +132,22 @@ public class ScimDao {
         Map<String, LscDatasets> resources = new LinkedHashMap<>();
         Response response = null;
         try {
-            WebTarget currentTarget = target.path(entity);
-            if (domain.isPresent()) {
-                currentTarget = currentTarget.queryParam("domain", domain.get());
-            }
-            if (computedFilter.isPresent()) {
-                currentTarget = currentTarget.queryParam("filter", computedFilter.get());
-            }
-            String pivotName = getPivotName();
-            String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
-            currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
-            
             int resultsPerPage = pageSize.orElse(PAGESIZE_DEFAULT_VALUE); 
             Map<String, Object> results = null;
             int startIndex = 1;
             boolean hasFinished = false;
             do {
+                WebTarget currentTarget = target.path(entity);
+                if (domain.isPresent()) {
+                    currentTarget = currentTarget.queryParam("domain", domain.get());
+                }
+                if (computedFilter.isPresent()) {
+                    currentTarget = currentTarget.queryParam("filter", computedFilter.get());
+                }
+                String pivotName = getPivotName();
+                String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
+                currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
+
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
                 }
