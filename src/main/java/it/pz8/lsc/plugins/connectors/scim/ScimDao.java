@@ -151,7 +151,7 @@ public class ScimDao {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
                 }
-                if (resultsPerPage > 0) {
+                if (resultsPerPage > 0 && !(computedFilter.filter(f -> f.contains(ID.concat("=")) || f.contains(pivotName.concat("="))).isPresent())) {
                     currentTarget = currentTarget.queryParam("startIndex", startIndex);
                     currentTarget = currentTarget.queryParam("count", resultsPerPage);
                 }
@@ -164,7 +164,7 @@ public class ScimDao {
                 results = mapper.readValue(response.readEntity(String.class), Map.class);
                 if (results!=null && results.get(RESOURCES)!=null) {
                     List<Map> resourcesMap = (List)results.get(RESOURCES);
-                    if (resourcesMap.isEmpty() || resultsPerPage == 0) {
+                    if (resourcesMap.isEmpty() || resultsPerPage == 0 || (computedFilter.filter(f -> f.contains(ID.concat("=")) || f.contains(pivotName.concat("="))).isPresent())) {
                         hasFinished = true;
                     }
                     for (Map resource : resourcesMap) {
