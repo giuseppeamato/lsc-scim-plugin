@@ -53,7 +53,7 @@
                     <artifactId>groovy-all</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.forgerock.opendj</groupId>
+                    <groupId>org.forgerock.ce.opendj</groupId>
                     <artifactId>opendj-server</artifactId>
                 </exclusion>
             </exclusions>
