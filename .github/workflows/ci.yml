@@ -118,7 +118,7 @@ jobs:
   </mirrors>
 
 </settings>
-EOL
+        EOL
 
     - name: Build, test, and collect coverage with JaCoCo
       run: mvn -B clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ secrets.SONAR_TOKEN }}
