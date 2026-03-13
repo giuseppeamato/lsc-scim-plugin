@@ -13,6 +13,10 @@
     </properties>
 
     <repositories>
+		<repository>
+          <id>central</id>
+          <url>https://repo.maven.apache.org/maven2</url>
+		</repository>  
         <repository>
             <id>lsc-site</id>
             <url>https://lsc-project.org/maven</url>
