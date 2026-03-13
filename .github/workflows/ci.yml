@@ -39,6 +39,38 @@ jobs:
     - name: Import certificate to Java keystore
       run: sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/lib/security/cacerts
 
+    - name: Create Maven settings.xml
+      run: |
+          mkdir -p $HOME/.m2
+          cat > $HOME/.m2/settings.xml <<EOL
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <mirrors>
+    <!-- Sblocca i repository HTTP legacy -->
+    <mirror>
+      <id>lsc-site</id>
+      <mirrorOf>lsc-site</mirrorOf>
+      <url>http://lsc-project.org/maven</url>
+      <blocked>false</blocked>
+    </mirror>
+    <mirror>
+      <id>java-net</id>
+      <mirrorOf>java.net Maven 2</mirrorOf>
+      <url>http://download.java.net/maven/2</url>
+      <blocked>false</blocked>
+    </mirror>
+    <mirror>
+      <id>forgerock</id>
+      <mirrorOf>forgerock-community-repository</mirrorOf>
+      <url>http://maven.forgerock.org/repo/community</url>
+      <blocked>false</blocked>
+    </mirror>
+  </mirrors>
+</settings>
+EOL
+
     - name: Build, test, and collect coverage with JaCoCo
       run: mvn -B clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
