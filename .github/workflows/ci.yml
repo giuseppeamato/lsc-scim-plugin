@@ -32,10 +32,10 @@ jobs:
       run: sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/lib/security/cacerts
 
     - name: Build, test, and collect coverage with JaCoCo
-      run: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ SONAR_TOKEN }}
+      run: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        token: ${{ CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV_TOKEN }}
         files: target/site/jacoco/jacoco.xml
