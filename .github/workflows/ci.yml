@@ -12,18 +12,20 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: temurin
         java-version: 17
         cache: maven
 
-    - name: Login to Docker
-      if: secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    - name: Login to Docker Hub
+      uses: docker/login-action@v4
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Download certificate
       run: wget https://github.com/giuseppeamato/lsc-scim-plugin/releases/download/v1.1.2/wso2ids.crt
@@ -32,10 +34,10 @@ jobs:
       run: sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/lib/security/cacerts
 
     - name: Build, test, and collect coverage with JaCoCo
-      run: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      run: mvn -B clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: target/site/jacoco/jacoco.xml
