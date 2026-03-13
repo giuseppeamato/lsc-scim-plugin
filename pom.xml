@@ -21,11 +21,6 @@
             <id>lsc-site</id>
             <url>https://lsc-project.org/maven</url>
         </repository>
-		<repository>
-			<id>forgerock-community-repository</id>
-			<name>ForgeRock CommunityRepository</name>
-			<url>https://maven.forgerock.org/artifactory/community</url>
-		</repository>
     </repositories>
 
     <dependencies>
