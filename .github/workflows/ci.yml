@@ -42,18 +42,16 @@ jobs:
     - name: Configure Maven settings.xml
       run: |
         mkdir -p $HOME/.m2
-        cat > $HOME/.m2/settings.xml <<EOL
+        cat > $HOME/.m2/settings.xml <<'EOL'
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-  <!-- Profili per repository -->
   <profiles>
     <profile>
       <id>default-profile</id>
       <repositories>
-        <!-- Repository principali -->
         <repository>
           <id>central</id>
           <url>https://repo.maven.apache.org/maven2</url>
@@ -76,12 +74,10 @@ jobs:
     </profile>
   </profiles>
 
-  <!-- Attiva il profilo -->
   <activeProfiles>
     <activeProfile>default-profile</activeProfile>
   </activeProfiles>
 
-  <!-- Sblocca repository HTTP legacy -->
   <mirrors>
     <mirror>
       <id>lsc-site-http</id>
