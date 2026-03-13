@@ -39,35 +39,89 @@ jobs:
     - name: Import certificate to Java keystore
       run: sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/lib/security/cacerts
 
-    - name: Create Maven settings.xml
+
+    - name: Configure Maven settings.xml
       run: |
-          mkdir -p $HOME/.m2
-          cat > $HOME/.m2/settings.xml <<EOL
+        mkdir -p $HOME/.m2
+    cat > $HOME/.m2/settings.xml <<EOL
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <!-- Profili per repository -->
+  <profiles>
+    <profile>
+      <id>default-profile</id>
+      <repositories>
+        <!-- Repository principali -->
+        <repository>
+          <id>central</id>
+          <url>https://repo.maven.apache.org/maven2</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>lsc-site</id>
+          <url>https://lsc-project.org/maven</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>forgerock-community-repository</id>
+          <url>https://maven.forgerock.org/artifactory/community</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+
+  <!-- Attiva il profilo -->
+  <activeProfiles>
+    <activeProfile>default-profile</activeProfile>
+  </activeProfiles>
+
+  <!-- Sblocca repository HTTP legacy -->
   <mirrors>
-    <!-- Sblocca i repository HTTP legacy -->
     <mirror>
-      <id>lsc-site</id>
+      <id>lsc-site-http</id>
       <mirrorOf>lsc-site</mirrorOf>
       <url>http://lsc-project.org/maven</url>
       <blocked>false</blocked>
     </mirror>
     <mirror>
-      <id>java-net</id>
+      <id>java-net-http</id>
       <mirrorOf>java.net Maven 2</mirrorOf>
       <url>http://download.java.net/maven/2</url>
       <blocked>false</blocked>
     </mirror>
     <mirror>
-      <id>forgerock</id>
+      <id>forgerock-http</id>
       <mirrorOf>forgerock-community-repository</mirrorOf>
       <url>http://maven.forgerock.org/repo/community</url>
       <blocked>false</blocked>
     </mirror>
+    <mirror>
+      <id>burtsev-http</id>
+      <mirrorOf>burtsev-net-maven</mirrorOf>
+      <url>http://maven.burtsev.net</url>
+      <blocked>false</blocked>
+    </mirror>
+    <mirror>
+      <id>oracle-http</id>
+      <mirrorOf>oracleReleases</mirrorOf>
+      <url>http://download.oracle.com/maven</url>
+      <blocked>false</blocked>
+    </mirror>
+    <mirror>
+      <id>reflections-http</id>
+      <mirrorOf>reflections-repo</mirrorOf>
+      <url>http://reflections.googlecode.com/svn/repo</url>
+      <blocked>false</blocked>
+    </mirror>
   </mirrors>
+
 </settings>
 EOL
 
