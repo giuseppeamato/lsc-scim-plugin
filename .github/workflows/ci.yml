@@ -39,11 +39,10 @@ jobs:
     - name: Import certificate to Java keystore
       run: sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/lib/security/cacerts
 
-
     - name: Configure Maven settings.xml
       run: |
         mkdir -p $HOME/.m2
-    cat > $HOME/.m2/settings.xml <<EOL
+        cat > $HOME/.m2/settings.xml <<EOL
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
