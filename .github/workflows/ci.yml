@@ -33,12 +33,6 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Download certificate
-      run: wget https://github.com/giuseppeamato/lsc-scim-plugin/releases/download/v1.1.2/wso2ids.crt
-
-    - name: Import certificate to Java keystore
-      run: sudo keytool -importcert -trustcacerts -noprompt -alias wso2ids -file wso2ids.crt -storepass changeit -keystore $JAVA_HOME/lib/security/cacerts
-
     - name: Build, test, and collect coverage with JaCoCo
       run: mvn -B clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.login=${{ secrets.SONAR_TOKEN }} -s .mvn/settings.xml
 

@@ -15,6 +15,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
@@ -102,8 +110,26 @@ public class ScimDao {
         this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
         this.namespaces = settings.getSchema()!=null?settings.getSchema().getNamespace():new ArrayList<>();
 
-        Client client = ClientBuilder.newClient().property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
-                .register(new BasicAuthenticator(connection.getUsername() , connection.getPassword()));
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .register(new BasicAuthenticator(connection.getUsername(), connection.getPassword()));
+        if (Boolean.getBoolean("lsc.scim.ssl.disable.verify")) {
+            LOGGER.warn("SSL certificate verification is disabled (lsc.scim.ssl.disable.verify=true)");
+            try {
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, new TrustManager[]{
+                    new X509TrustManager() {
+                        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+                    }
+                }, new SecureRandom());
+                clientBuilder.sslContext(sslContext).hostnameVerifier((hostname, session) -> true);
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                LOGGER.error("Failed to disable SSL verification", e);
+            }
+        }
+        Client client = clientBuilder.build();
         target = client.target(connection.getUrl());
     }
 

@@ -13,10 +13,6 @@
     </properties>
 
     <repositories>
-		<repository>
-          <id>central</id>
-          <url>https://repo.maven.apache.org/maven2</url>
-		</repository>  
         <repository>
             <id>lsc-site</id>
             <url>https://lsc-project.org/maven</url>
@@ -86,15 +82,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>5.6.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>4.3.1</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -112,7 +102,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.14.3</version>
+            <version>1.20.4</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -120,7 +110,7 @@
                     <artifactId>junit</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>        
+        </dependency>
     </dependencies>
 
     <build>
@@ -131,6 +121,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- Disables SSL certificate verification in ScimDao for functional tests -->
+                        <lsc.scim.ssl.disable.verify>true</lsc.scim.ssl.disable.verify>
+                    </systemPropertyVariables>
+                    <!-- Required for Jersey HttpUrlConnectorProvider.SET_METHOD_WORKAROUND on Java 9+ -->
+                    <argLine>--add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED</argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
