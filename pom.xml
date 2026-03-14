@@ -191,21 +191,16 @@
 			      		<goals>
 					        <goal>report</goal>
 			      		</goals>
+		                <configuration>
+		                    <formats>
+		                        <format>HTML</format>
+		                        <format>XML</format>
+		                    </formats>
+		                    <check />
+		                </configuration>
 				    </execution>
 			  </executions>
 			</plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
-                <configuration>
-                    <formats>
-                        <format>html</format>
-                        <format>xml</format>
-                    </formats>
-                    <check />
-                </configuration>
-            </plugin>
         </plugins>
     </build>
     
