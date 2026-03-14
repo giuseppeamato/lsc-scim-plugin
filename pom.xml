@@ -129,7 +129,7 @@
                         <lsc.scim.ssl.disable.verify>true</lsc.scim.ssl.disable.verify>
                     </systemPropertyVariables>
                     <!-- Required for Jersey HttpUrlConnectorProvider.SET_METHOD_WORKAROUND on Java 9+ -->
-                    <argLine>--add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED</argLine>
+                    <argLine>${argLine} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -178,7 +178,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 			  	<artifactId>jacoco-maven-plugin</artifactId>
-			  	<version>0.8.11</version>
+			  	<version>0.8.12</version>
 			  	<executions>
 				    <execution>
 			      		<goals>
