@@ -17,6 +17,7 @@ import org.lsc.LscModifications;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.TaskType;
+import org.lsc.configuration.ValuesType;
 import org.lsc.exception.LscServiceCommunicationException;
 import org.lsc.exception.LscServiceConfigurationException;
 import org.lsc.exception.LscServiceException;
@@ -144,7 +145,8 @@ public class ScimDstService implements IWritableService {
     @Override
     public List<String> getWriteDatasetIds() {
         LOGGER.debug("Call to getWriteDatasetIds()");
-        return settings.getWritableAttributes().getString();
+        ValuesType writableAttrs = settings.getWritableAttributes();
+        return (writableAttrs!=null)?writableAttrs.getString():null;
     }
 
 }

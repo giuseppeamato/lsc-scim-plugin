@@ -1,8 +1,8 @@
 coverage:
   precision: 2
   round: nearest
-  range: "60...90"
+  range: 60...90
   
 ignore:
     - "src/main/java/it/pz8/lsc/plugins/connectors/scim/bean/ScimValueOperation.java"  
-    - "src/main/java/it/pz8/lsc/plugins/connectors/scim/generated"    
+    - "src/main/java/it/pz8/lsc/plugins/connectors/scim/generated"
