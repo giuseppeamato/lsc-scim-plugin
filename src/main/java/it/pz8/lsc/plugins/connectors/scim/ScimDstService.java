@@ -124,8 +124,7 @@ public class ScimDstService implements IWritableService {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug(String.format("Deleting SCIM entry: %s", lm.getMainIdentifier()));
                     }
-                    dao.delete(lm.getMainIdentifier());
-                    result = true;
+                    result = dao.delete(lm.getMainIdentifier());
                     break;
                 default:
                     LOGGER.error(String.format("Unknown operation %s", lm.getOperation()));

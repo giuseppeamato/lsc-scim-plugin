@@ -237,6 +237,22 @@ class ScimDstServiceTest {
     
     @Test
     @Order(9)
+    void removeUserNotFoundShouldFail() throws LscServiceException {
+        testDstService = new ScimDstService(task);
+        LscDatasets lscDatasets = new LscDatasets();
+        lscDatasets.put("uid", "pippo123");
+        IBean bean = testDstService.getBean("pippo123", lscDatasets, true);
+        assertThat(bean).isNotNull();
+        LscModifications lm = new LscModifications(LscModificationType.DELETE_OBJECT);
+        lm.setMainIdentifer("pippo123");
+        boolean result = testDstService.apply(lm);
+        assertThat(result).isTrue();
+        bean = testDstService.getBean("pippo", lscDatasets, true);
+        assertThat(bean).isNull();        
+    }
+    
+    @Test
+    @Order(10)
     void removeUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -252,7 +268,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(10)
+    @Order(11)
     void addGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -271,7 +287,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     void updateMembership() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
@@ -288,7 +304,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(12)
+    @Order(13)
     void removeGroup() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -304,7 +320,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getAny()).thenReturn(null);
         ScimDstService testDstService;
@@ -318,7 +334,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(14)
+    @Order(15)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         ScimDstService testDstService;
@@ -332,7 +348,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(15)
+    @Order(16)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
         ScimDstService testDstService;
