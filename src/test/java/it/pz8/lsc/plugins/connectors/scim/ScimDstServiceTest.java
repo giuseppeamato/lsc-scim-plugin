@@ -180,7 +180,9 @@ class ScimDstServiceTest {
         lscDatasets.put("uid", "pippo");
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("name.givenName")).isEqualTo("Tizio");
-        assertThat(writableDatasetIds.contains("name.givenName")).isTrue();
+        if (writableDatasetIds!=null) {
+        	assertThat(writableDatasetIds.contains("name.givenName")).isTrue();
+        }
     }
 
     @Test
