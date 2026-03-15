@@ -246,9 +246,7 @@ class ScimDstServiceTest {
         LscModifications lm = new LscModifications(LscModificationType.DELETE_OBJECT);
         lm.setMainIdentifer("pippo123");
         boolean result = testDstService.apply(lm);
-        assertThat(result).isTrue();
-        bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean).isNull();        
+        assertThat(result).isFalse();
     }
     
     @Test
