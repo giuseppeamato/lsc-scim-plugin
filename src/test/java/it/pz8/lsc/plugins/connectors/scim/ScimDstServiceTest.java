@@ -169,6 +169,7 @@ class ScimDstServiceTest {
     @Order(5)
     void updateNestedAttribute() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
+        List<String> writableDatasetIds = testDstService.getWriteDatasetIds();
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
         LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "name.givenName", ImmutableList.of("Tizio"));
@@ -179,6 +180,7 @@ class ScimDstServiceTest {
         lscDatasets.put("uid", "pippo");
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("name.givenName")).isEqualTo("Tizio");
+        assertThat(writableDatasetIds.contains("name.givenName")).isTrue();
     }
 
     @Test
