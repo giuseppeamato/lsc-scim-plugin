@@ -1,7 +1,7 @@
 # SCIM2 LSC Plugin
 
 [![Build Status](https://github.com/giuseppeamato/lsc-scim-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/giuseppeamato/lsc-scim-plugin/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/giuseppeamato/lsc-scim-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/giuseppeamato/lsc-scim-plugin)
+[![codecov](https://codecov.io/gh/giuseppeamato/lsc-scim-plugin/graph/badge.svg?token=S80UDC1165)](https://codecov.io/gh/giuseppeamato/lsc-scim-plugin)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=giuseppeamato_lsc-scim-plugin&metric=alert_status)](https://sonarcloud.io/dashboard?id=giuseppeamato_lsc-scim-plugin)
 
 A SCIM2 plugin connector for LSC (LDAP Synchronization Connector)
