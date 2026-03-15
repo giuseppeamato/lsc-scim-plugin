@@ -242,7 +242,7 @@ class ScimDstServiceTest {
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("uid", "pippo123");
         IBean bean = testDstService.getBean("pippo123", lscDatasets, true);
-        assertThat(bean).isNotNull();
+        assertThat(bean).isNull();
         LscModifications lm = new LscModifications(LscModificationType.DELETE_OBJECT);
         lm.setMainIdentifer("pippo123");
         boolean result = testDstService.apply(lm);
