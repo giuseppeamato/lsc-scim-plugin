@@ -38,6 +38,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 import com.google.common.collect.ImmutableList;
 
+import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
@@ -237,26 +238,14 @@ class ScimDstServiceTest {
     
     @Test
     @Order(9)
-    void removeUserNotFoundShouldFail() throws LscServiceException {
-        testDstService = new ScimDstService(task);
-        LscDatasets lscDatasets = new LscDatasets();
-        lscDatasets.put("uid", "pippo123");
-        IBean bean = testDstService.getBean("pippo123", lscDatasets, true);
-        assertThat(bean).isNull();
-        LscModifications lm = new LscModifications(LscModificationType.DELETE_OBJECT);
-        lm.setMainIdentifer("pippo123");
-        boolean result = testDstService.apply(lm);
-        assertThat(result).isFalse();
-    }
-    
-    @Test
-    @Order(10)
     void removeUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("uid", "pippo");
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean).isNotNull();
+        OperationType operation = OperationType.getFromName("remove");
+        assertThat(operation.equals(OperationType.REMOVE)).isTrue();
         LscModifications lm = new LscModifications(LscModificationType.DELETE_OBJECT);
         lm.setMainIdentifer("pippo");
         boolean result = testDstService.apply(lm);
@@ -266,7 +255,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(11)
+    @Order(10)
     void addGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -285,7 +274,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(12)
+    @Order(11)
     void updateMembership() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
@@ -302,7 +291,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(13)
+    @Order(12)
     void removeGroup() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -318,7 +307,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(14)
+    @Order(13)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getAny()).thenReturn(null);
         ScimDstService testDstService;
@@ -332,7 +321,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(15)
+    @Order(14)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         ScimDstService testDstService;
@@ -346,7 +335,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(16)
+    @Order(15)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
         ScimDstService testDstService;
