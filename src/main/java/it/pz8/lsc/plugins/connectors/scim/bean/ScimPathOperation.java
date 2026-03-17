@@ -14,9 +14,9 @@ public class ScimPathOperation extends ScimOperation implements Serializable {
     private static final long serialVersionUID = -6350260898633591836L;
 
     private String path;
-    private Object value;
+    private Serializable value;
 
-    public ScimPathOperation(String op, String path, Object value)  {
+    public ScimPathOperation(String op, String path, Serializable value)  {
         this.op = op;
         this.path = path;
         this.value = value;
@@ -27,7 +27,7 @@ public class ScimPathOperation extends ScimOperation implements Serializable {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public Object getValue() {
+    public Serializable getValue() {
         return value;
     }
 

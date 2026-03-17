@@ -25,6 +25,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import java.io.Serializable;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.HttpUrlConnectorProvider;
@@ -398,7 +400,7 @@ public class ScimDao {
 
     private ScimPathOperation createOperation(String operation, LscDatasetModification diff, LscModifications lm) {
         String path = replaceAlias(diff.getAttributeName());
-        Object value = getFirstValueAsString(diff.getValues());
+        Serializable value = getFirstValueAsString(diff.getValues());
         if (isMultivaluedAttribute(diff.getAttributeName()) && !diff.getOperation().equals(DELETE_VALUES)) {
             path = getMultivaluedAttributeName(diff.getAttributeName());
             String attrIdx = getMultivaluedAttributeIndex(diff.getAttributeName());
@@ -412,8 +414,8 @@ public class ScimDao {
                     value = getFirstValueAsString(diff.getValues());
                     operation = OperationType.REPLACE.getName();
                 } else {
-                    value = new ArrayList<>();
-                    ((List<Object>)value).add(new ValueType(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));
+                    value = new ArrayList<Serializable>();
+                    ((List<Serializable>)value).add(new ValueType(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));
                     operation = OperationType.ADD.getName();
                 }
             }
@@ -570,8 +572,8 @@ public class ScimDao {
         return (currentDestValue!=null && !currentDestValue.isEmpty());
     }
     
-    private List<Object> stringValuesToJsonValues(List<Object> stringValues) {
-        List<Object> jsonValues = new ArrayList<>();
+    private ArrayList<Object> stringValuesToJsonValues(List<Object> stringValues) {
+        ArrayList<Object> jsonValues = new ArrayList<>();
         for (Object entry : stringValues) {
             if (!entry.toString().equals("")) {
                 try {

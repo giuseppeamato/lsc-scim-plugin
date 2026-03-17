@@ -1,12 +1,16 @@
 package it.pz8.lsc.plugins.connectors.scim.bean;
 
+import java.io.Serializable;
+
 /**
  * @author Giuseppe Amato
  *
  */
-public class ValueType {
+public class ValueType implements Serializable {
 
-    private String type;
+	private static final long serialVersionUID = -1652454332956200324L;
+
+	private String type;
     private String value;
 
     public ValueType(String type, String value) {
