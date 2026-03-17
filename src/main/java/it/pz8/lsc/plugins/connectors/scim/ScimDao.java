@@ -327,7 +327,7 @@ public class ScimDao {
             }
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(unflattenDiffs));
             if (!checkResponse(response)) {
-                LOGGER.error(String.format("Error %d (%s) while creating %s", response.getStatus(), response.getStatusInfo(), getEntityName()));
+                LOGGER.error("Error {} ({}) while creating {}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName() });
             } else {
                 result = true;
             }
