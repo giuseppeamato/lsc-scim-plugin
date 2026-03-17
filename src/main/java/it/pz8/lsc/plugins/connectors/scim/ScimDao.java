@@ -142,13 +142,11 @@ public class ScimDao {
         int resultsPerPage = isIdFilter(computedFilter, pivotName) ? 0 : pageSize.orElse(PAGESIZE_DEFAULT_VALUE);
         int startIndex = 1;
         try {
-            List<LinkedHashMap> page;
+            List<Map<String, Object>> page;
             do {
                 WebTarget currentTarget = buildListTarget(computedFilter, pivotName, startIndex, resultsPerPage);
                 page = fetchPage(currentTarget);
-                page.forEach(resource -> resources.put(
-                    resource.get(pivotName).toString(),
-                    toDatasets(resource, pivotName)
+                page.forEach(resource -> resources.put(resource.get(pivotName).toString(), toDatasets(resource)
                 ));
                 startIndex += resultsPerPage;
             } while (!page.isEmpty() && resultsPerPage > 0);
@@ -181,7 +179,7 @@ public class ScimDao {
         return currentTarget;
     }
     
-    private List<LinkedHashMap> fetchPage(WebTarget currentTarget) throws LscServiceException, JsonProcessingException {
+    private List<Map<String, Object>> fetchPage(WebTarget currentTarget) throws LscServiceException, JsonProcessingException {
         Response response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
         try {
             if (!checkResponse(response)) {
@@ -189,9 +187,9 @@ public class ScimDao {
                 LOGGER.error(errorMessage);
                 throw new LscServiceException(errorMessage);
             }
-            LinkedHashMap<String, Object> results = mapper.readValue(response.readEntity(String.class), LinkedHashMap.class);
+            Map<String, Object> results = mapper.readValue(response.readEntity(String.class), LinkedHashMap.class);
             if (results != null && results.get(RESOURCES) != null) {
-                return (List<LinkedHashMap>) results.get(RESOURCES);
+                return (List<Map<String, Object>>) results.get(RESOURCES);
             }
             return List.of();
         } finally {
@@ -199,7 +197,7 @@ public class ScimDao {
         }
     }
     
-    private LscDatasets toDatasets(Map resource, String pivotName) {
+    private LscDatasets toDatasets(Map<String, Object> resource) {
         LscDatasets datasets = new LscDatasets();
         datasets.put(ID, resource.get(ID));
         pivot.ifPresent(p -> datasets.put(p, resource.get(p)));
@@ -261,12 +259,12 @@ public class ScimDao {
                 LOGGER.error(errorMessage);
                 throw new ProcessingException(errorMessage);
             }
-            Map<String, Object> results = mapper.readValue(response.readEntity(String.class), Map.class);
+            Map<String, Object> results = mapper.readValue(response.readEntity(String.class), LinkedHashMap.class);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(String.format("SCIM Response :\r%n%s", results));
             }
             if (results!=null && results.get(RESOURCES)!=null) {
-                List<Map> resourcesMap = (List<Map>)results.get(RESOURCES);
+                List<Map<String, Object>> resourcesMap = (List<Map<String, Object>>)results.get(RESOURCES);
                 switch (resourcesMap.size()) {
                 case 0:
                     throw new NotFoundException(String.format("%s %s cannot be found by pivot", getEntityName(), pivotValue));
