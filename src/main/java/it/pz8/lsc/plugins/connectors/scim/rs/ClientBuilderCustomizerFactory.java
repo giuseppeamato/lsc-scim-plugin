@@ -4,6 +4,9 @@ public final class ClientBuilderCustomizerFactory {
 
 	private static ClientBuilderCustomizer clientBuilderCustomizer;
 	
+	private ClientBuilderCustomizerFactory() {
+	}
+	
     static {
         String customizerClass = System.getProperty(
                 "clientBuilderCustomizer.class",
