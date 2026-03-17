@@ -3,6 +3,7 @@ package it.pz8.lsc.plugins.connectors.scim;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.GROUPS;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.USERS;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,7 @@ public class ScimDstService implements IWritableService {
         String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
         try {
             Map<String, Object> entity = dao.getDetailsByPivot(pivotValue);
-            IBean bean = beanClass.newInstance();
+            IBean bean = beanClass.getDeclaredConstructor().newInstance();
             bean.setMainIdentifier(entity.get(pivotName).toString());
             LscDatasets datasets = new LscDatasets();
             entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null ? new LinkedHashSet<>() : entry.getValue()));
@@ -88,6 +89,8 @@ public class ScimDstService implements IWritableService {
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("id %s not found", pivotValue));
             return null;
+        } catch (NoSuchMethodException | InvocationTargetException e) {
+            throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
         } catch (ProcessingException | WebApplicationException e) {
             throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", pivotValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {

@@ -4,6 +4,7 @@ import static it.pz8.lsc.plugins.connectors.scim.ScimDao.GROUPS;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.ID;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.USERS;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -91,7 +92,7 @@ public class ScimSrcService implements IService {
         }
         try {
             Map<String, Object> entity = dao.getDetails(idValue);
-            IBean bean = beanClass.newInstance();
+            IBean bean = beanClass.getDeclaredConstructor().newInstance();
             bean.setMainIdentifier(idValue);
             LscDatasets datasets = new LscDatasets();
             entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null?new LinkedHashSet<>():entry.getValue()));
@@ -100,6 +101,8 @@ public class ScimSrcService implements IService {
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("id %s not found", idValue));
             return null;
+        } catch (NoSuchMethodException | InvocationTargetException e) {
+            throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
         } catch (ProcessingException | WebApplicationException e) {
             throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", idValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {
@@ -112,7 +115,7 @@ public class ScimSrcService implements IService {
         try {
             Optional<Entry<String, LscDatasets>> entity = dao.findFirstByPivot(pivotValue);
             if (entity.isPresent()) {
-                IBean bean = beanClass.newInstance();
+                IBean bean = beanClass.getDeclaredConstructor().newInstance();
                 bean.setMainIdentifier(entity.get().getKey());
                 bean.setDatasets(entity.get().getValue());
                 return bean;
@@ -122,6 +125,8 @@ public class ScimSrcService implements IService {
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("%s %s not found", pivotName, pivotValue));
             return null;
+        } catch (NoSuchMethodException | InvocationTargetException e) {
+            throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
         } catch (ProcessingException | WebApplicationException e) {
             throw new LscServiceException(String.format("Exception while getting bean %s/%s (%s)", pivotName, pivotValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {
