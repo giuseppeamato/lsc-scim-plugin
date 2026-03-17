@@ -131,9 +131,6 @@ public class ScimDstService implements IWritableService {
                     result = false;
                 }
             }
-        } catch (NotFoundException e) {
-            LOGGER.error(String.format("NotFoundException while writing (%s)", e));
-            result = false;
         } catch (ProcessingException e) {
             LOGGER.error(String.format("ProcessingException while writing (%s)", e));
             result = false;
