@@ -36,8 +36,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import com.google.common.collect.ImmutableList;
-
 import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
@@ -70,7 +68,7 @@ class ScimDstServiceTest {
     private static ScimDstService testDstService;
 
     @BeforeAll
-    static void setup() throws Exception {
+    static void setup() {
     	System.setProperty("clientBuilderCustomizer.class", InsecureTestClientBuilderCustomizer.class.getName());
         wso2ids = new GenericContainer<>(IMAGE_NAME);
         wso2ids.withExposedPorts(EXPOSED_PORT);      
@@ -92,7 +90,7 @@ class ScimDstServiceTest {
         when(connectionType.getPassword()).thenReturn(PASSWORD);
         when(connection.getReference()).thenReturn(connectionType);
         when(pluginDestinationService.getConnection()).thenReturn(connection);
-        when(pluginDestinationService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
+        when(pluginDestinationService.getAny()).thenReturn(List.of(serviceSettings));
         when(serviceSettings.getEntity()).thenReturn("Users");
         when(serviceSettings.getSchema()).thenReturn(createScimSchema());
         when(serviceSettings.getFilter()).thenReturn(null);
@@ -126,7 +124,7 @@ class ScimDstServiceTest {
         testDstService = new ScimDstService(task);
         Map<String, LscDatasets> bean = testDstService.getListPivots();
         assertThat(bean).isNotNull();
-        assertThat(bean.size()).isPositive();
+        assertThat(bean).isNotEmpty();
     }
 
     @Test
@@ -154,12 +152,12 @@ class ScimDstServiceTest {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
         lm.setMainIdentifer("pippo");
-        LscDatasetModification username = new LscDatasetModification(ADD_VALUES, "userName", ImmutableList.of("pippo"));
-        LscDatasetModification password = new LscDatasetModification(ADD_VALUES, "password", ImmutableList.of("123456"));
-        LscDatasetModification firstname = new LscDatasetModification(ADD_VALUES, "name.givenName", ImmutableList.of("Pippo"));
-        LscDatasetModification lastname = new LscDatasetModification(ADD_VALUES, "name.familyName", ImmutableList.of("Pezzotto"));
-        LscDatasetModification email = new LscDatasetModification(ADD_VALUES, "emails[]", ImmutableList.of("pippo@localhost.com"));
-        lm.setLscAttributeModifications(ImmutableList.of(username, password, firstname, lastname, email));
+        LscDatasetModification username = new LscDatasetModification(ADD_VALUES, "userName", List.of("pippo"));
+        LscDatasetModification password = new LscDatasetModification(ADD_VALUES, "password", List.of("123456"));
+        LscDatasetModification firstname = new LscDatasetModification(ADD_VALUES, "name.givenName", List.of("Pippo"));
+        LscDatasetModification lastname = new LscDatasetModification(ADD_VALUES, "name.familyName", List.of("Pezzotto"));
+        LscDatasetModification email = new LscDatasetModification(ADD_VALUES, "emails[]", List.of("pippo@localhost.com"));
+        lm.setLscAttributeModifications(List.of(username, password, firstname, lastname, email));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
@@ -175,8 +173,8 @@ class ScimDstServiceTest {
         List<String> writableDatasetIds = testDstService.getWriteDatasetIds();
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "name.givenName", ImmutableList.of("Tizio"));
-        lm.setLscAttributeModifications(ImmutableList.of(datasetModification));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "name.givenName", List.of("Tizio"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
@@ -196,8 +194,8 @@ class ScimDstServiceTest {
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
         lm.setDestinationBean(destinationBean);
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[]", ImmutableList.of("other@localhost.com"));
-        lm.setLscAttributeModifications(ImmutableList.of(datasetModification));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[]", List.of("other@localhost.com"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
@@ -214,8 +212,8 @@ class ScimDstServiceTest {
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
         lm.setDestinationBean(destinationBean);
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[type eq work]", ImmutableList.of("work@localhost.com"));
-        lm.setLscAttributeModifications(ImmutableList.of(datasetModification));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[type eq work]", List.of("work@localhost.com"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
@@ -228,8 +226,8 @@ class ScimDstServiceTest {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "ENTERPRISE_USER.department", ImmutableList.of("IT"));
-        lm.setLscAttributeModifications(ImmutableList.of(datasetModification));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "ENTERPRISE_USER.department", List.of("IT"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
@@ -247,7 +245,7 @@ class ScimDstServiceTest {
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean).isNotNull();
         OperationType operation = OperationType.getFromName("remove");
-        assertThat(operation.equals(OperationType.REMOVE)).isTrue();
+        assertThat(operation).isEqualTo(OperationType.REMOVE);
         LscModifications lm = new LscModifications(LscModificationType.DELETE_OBJECT);
         lm.setMainIdentifer("pippo");
         boolean result = testDstService.apply(lm);
@@ -265,8 +263,8 @@ class ScimDstServiceTest {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
         lm.setMainIdentifer("developer");
-        LscDatasetModification displayName = new LscDatasetModification(ADD_VALUES, "displayName", ImmutableList.of("developer"));
-        lm.setLscAttributeModifications(ImmutableList.of(displayName));
+        LscDatasetModification displayName = new LscDatasetModification(ADD_VALUES, "displayName", List.of("developer"));
+        lm.setLscAttributeModifications(List.of(displayName));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
@@ -282,8 +280,8 @@ class ScimDstServiceTest {
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("developer");
         String adminUser = "{\"display\": \"admin\" }";
-        LscDatasetModification members = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "members[]", ImmutableList.of(adminUser));    
-        lm.setLscAttributeModifications(ImmutableList.of(members));
+        LscDatasetModification members = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "members[]", List.of(adminUser));    
+        lm.setLscAttributeModifications(List.of(members));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
@@ -312,21 +310,19 @@ class ScimDstServiceTest {
     @Order(13)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getAny()).thenReturn(null);
-        ScimDstService testDstService;
         try {
             testDstService = new ScimDstService(task);
         } catch (LscServiceConfigurationException e) {
             testDstService = null;
         }
         assertThat(testDstService).isNull();
-        when(pluginDestinationService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
+        when(pluginDestinationService.getAny()).thenReturn(List.of(serviceSettings));
     }
     
     @Test
     @Order(14)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
-        ScimDstService testDstService;
         try {
             testDstService = new ScimDstService(task);
         } catch (LscServiceConfigurationException e) {
@@ -340,7 +336,6 @@ class ScimDstServiceTest {
     @Order(15)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
-        ScimDstService testDstService;
         try {        
             testDstService = new ScimDstService(task);
         } catch (LscServiceConfigurationException e) {

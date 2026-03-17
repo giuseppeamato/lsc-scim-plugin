@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
@@ -24,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
@@ -57,7 +57,7 @@ class ScimSrcServiceTest {
     private static PluginDestinationServiceType pluginDestinationService;
 
     @BeforeAll
-    static void setup() throws Exception {
+    static void setup() {
     	System.setProperty("clientBuilderCustomizer.class", InsecureTestClientBuilderCustomizer.class.getName());
         wso2ids = new GenericContainer<>(IMAGE_NAME);
         wso2ids.withExposedPorts(EXPOSED_PORT);
@@ -79,7 +79,7 @@ class ScimSrcServiceTest {
         when(connectionType.getPassword()).thenReturn(PASSWORD);
         when(connection.getReference()).thenReturn(connectionType);  
         when(pluginSourceService.getConnection()).thenReturn(connection);
-        when(pluginSourceService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
+        when(pluginSourceService.getAny()).thenReturn(List.of(serviceSettings));
         when(serviceSettings.getEntity()).thenReturn("Users");
         when(task.getBean()).thenReturn("org.lsc.beans.SimpleBean");
         when(task.getPluginSourceService()).thenReturn(pluginSourceService);
@@ -101,7 +101,7 @@ class ScimSrcServiceTest {
             testSrcService = null;
         }
         assertThat(testSrcService).isNull();
-        when(pluginSourceService.getAny()).thenReturn(ImmutableList.of(serviceSettings));
+        when(pluginSourceService.getAny()).thenReturn(List.of(serviceSettings));
     }
     
     @Test
