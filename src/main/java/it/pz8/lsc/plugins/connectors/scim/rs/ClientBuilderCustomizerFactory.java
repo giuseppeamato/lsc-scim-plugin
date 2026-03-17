@@ -8,11 +8,7 @@ public final class ClientBuilderCustomizerFactory {
 	}
 	
     static {
-        String customizerClass = System.getProperty(
-                "clientBuilderCustomizer.class",
-                DefaultClientBuilderCustomizer.class.getName()
-        );
-
+        String customizerClass = System.getProperty("clientBuilderCustomizer.class", DefaultClientBuilderCustomizer.class.getName());
         try {
         	clientBuilderCustomizer = (ClientBuilderCustomizer) Class
                     .forName(customizerClass)

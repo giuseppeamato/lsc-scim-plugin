@@ -335,12 +335,28 @@ class ScimDstServiceTest {
     @Order(15)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
-        try {        
+        try {
             testDstService = new ScimDstService(task);
         } catch (LscServiceConfigurationException e) {
             testDstService = null;
         }
         assertThat(testDstService).isNull();
+    }
+    
+    @Test
+    @Order(16)
+    void getListPivotWithSSLCertificateExpiredShouldFail() throws LscServiceException {
+    	System.setProperty("clientBuilderCustomizer.class", null);    	
+    	assertThat(BASEPATH).startsWith("https");
+    	testDstService = new ScimDstService(task);
+    	boolean hasFailed = false;
+        try {
+            Map<String, LscDatasets> bean = testDstService.getListPivots();
+        } catch (LscServiceConfigurationException e) {
+        	hasFailed = true;
+        }
+        assertThat(hasFailed).isTrue();
+        System.setProperty("clientBuilderCustomizer.class", InsecureTestClientBuilderCustomizer.class.getName());
     }
 
 }
