@@ -40,6 +40,7 @@ import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
+import it.pz8.lsc.plugins.connectors.scim.rs.DefaultClientBuilderCustomizer;
 import it.pz8.lsc.plugins.connectors.scim.rs.InsecureTestClientBuilderCustomizer;
 
 /**
@@ -346,7 +347,7 @@ class ScimDstServiceTest {
     @Test
     @Order(16)
     void getListPivotWithSSLCertificateExpiredShouldFail() throws LscServiceException {
-    	System.setProperty("clientBuilderCustomizer.class", null);    	
+    	System.setProperty("clientBuilderCustomizer.class", DefaultClientBuilderCustomizer.class.getName()N);    	
     	assertThat(BASEPATH).startsWith("https");
     	testDstService = new ScimDstService(task);
     	boolean hasFailed = false;
