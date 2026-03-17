@@ -50,7 +50,8 @@ jobs:
     - name: Build, test, and collect coverage with JaCoCo
       env: 
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: mvn -B clean verify -X org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="$SONAR_TOKEN" -s .mvn/settings.xml
+        SONAR_EXCLUSIONS: "**/scim/generated/**/*.java"
+      run: mvn -B clean verify -X org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=giuseppeamato_lsc-scim-plugin -Dsonar.organization=giuseppeamato -Dsonar.host.url=https://sonarcloud.io -Dsonar.token="$SONAR_TOKEN" -Dsonar.exclusions=$SONAR_EXCLUSIONS -s .mvn/settings.xml
    
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
