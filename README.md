@@ -15,9 +15,6 @@ Download the latest distibution asset or build it with maven and upload the jar 
 folder.
 Run LSC with flag **-DLSC.PLUGINS.PACKAGEPATH=it.pz8.lsc.plugins.connectors.scim.generated**
 
-**Build note**
-The test phase of build process is docker container based, test units connects via https 
-to the services exposed by them, so you must include [this SSL certificate](wso2ids.crt) into your Java truststore (cacerts file).
 
 ## Configuration
 
