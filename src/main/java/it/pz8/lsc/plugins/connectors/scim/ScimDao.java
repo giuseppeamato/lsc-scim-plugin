@@ -382,7 +382,7 @@ public class ScimDao {
                 }
                 response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).method(HttpMethod.PATCH, Entity.entity(patchOpJson, MediaType.APPLICATION_JSON));
                 if (!checkResponse(response)) {
-                    LOGGER.error(String.format("Error %d (%s) while updating %s: %s", response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier()));
+                    LOGGER.error("Error {} ({}) while creating {} {}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier() });
                 } else {
                     result = true;
                 }
