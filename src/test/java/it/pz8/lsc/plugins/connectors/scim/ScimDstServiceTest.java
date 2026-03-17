@@ -347,7 +347,7 @@ class ScimDstServiceTest {
     @Test
     @Order(16)
     void getListPivotWithSSLCertificateExpiredShouldFail() throws LscServiceException {
-    	System.setProperty("clientBuilderCustomizer.class", DefaultClientBuilderCustomizer.class.getName()N);    	
+    	System.setProperty("clientBuilderCustomizer.class", DefaultClientBuilderCustomizer.class.getName());    	
     	assertThat(BASEPATH).startsWith("https");
     	testDstService = new ScimDstService(task);
     	boolean hasFailed = false;
