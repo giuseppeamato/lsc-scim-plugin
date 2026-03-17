@@ -42,7 +42,6 @@ import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
-import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizerFactory;
 import it.pz8.lsc.plugins.connectors.scim.rs.InsecureTestClientBuilderCustomizer;
 
 /**

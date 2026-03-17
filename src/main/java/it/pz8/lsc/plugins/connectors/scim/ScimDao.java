@@ -50,7 +50,6 @@ import it.pz8.lsc.plugins.connectors.scim.bean.ValueType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
 import it.pz8.lsc.plugins.connectors.scim.rs.BasicAuthenticator;
-import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizer;
 import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizerFactory;
 
 /**
@@ -138,68 +137,74 @@ public class ScimDao {
 
     public Map<String, LscDatasets> getList(Optional<String> computedFilter) throws LscServiceException {
         Map<String, LscDatasets> resources = new LinkedHashMap<>();
-        Response response = null;
+        String pivotName = getPivotName();
+        int resultsPerPage = isIdFilter(computedFilter, pivotName) ? 0 : pageSize.orElse(PAGESIZE_DEFAULT_VALUE);
+        int startIndex = 1;
         try {
-            int resultsPerPage = pageSize.orElse(PAGESIZE_DEFAULT_VALUE); 
-            Map<String, Object> results = null;
-            int startIndex = 1;
-            boolean hasFinished = false;
+            List<Map> page;
             do {
-                WebTarget currentTarget = target.path(entity);
-                if (domain.isPresent()) {
-                    currentTarget = currentTarget.queryParam("domain", domain.get());
-                }
-                if (computedFilter.isPresent()) {
-                    currentTarget = currentTarget.queryParam("filter", computedFilter.get());
-                }
-                String pivotName = getPivotName();
-                String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
-                currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
-
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
-                }
-                if (computedFilter.filter(f -> f.contains(ID.concat("=")) || f.contains(pivotName.concat("="))).isPresent()) {
-                    resultsPerPage = 0;
-                }
-                if (resultsPerPage > 0) {
-                    currentTarget = currentTarget.queryParam("startIndex", startIndex);
-                    currentTarget = currentTarget.queryParam("count", resultsPerPage);
-                }
-                response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
-                if (!checkResponse(response)) {
-                    String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
-                    LOGGER.error(errorMessage);
-                    throw new LscServiceException(errorMessage);
-                }
-                results = mapper.readValue(response.readEntity(String.class), Map.class);
-                if (results!=null && results.get(RESOURCES)!=null) {
-                    List<Map> resourcesMap = (List)results.get(RESOURCES);
-                    if (resourcesMap.isEmpty() || resultsPerPage == 0) {
-                        hasFinished = true;
-                    }
-                    for (Map resource : resourcesMap) {
-                        LscDatasets datasets = new LscDatasets();
-                        datasets.put(ID, resource.get(ID));
-                        pivot.ifPresent(p -> datasets.put(p, resource.get(p)));
-                        resources.put(resource.get(pivotName).toString(), datasets);
-                    }
-                } else {
-                    hasFinished = true;
-                }
-                startIndex = startIndex + resultsPerPage;
-            } while (!hasFinished);
-
+                WebTarget currentTarget = buildListTarget(computedFilter, pivotName, startIndex, resultsPerPage);
+                page = fetchPage(currentTarget);
+                page.forEach(resource -> resources.put(
+                    resource.get(pivotName).toString(),
+                    toDatasets(resource, pivotName)
+                ));
+                startIndex += resultsPerPage;
+            } while (!page.isEmpty() && resultsPerPage > 0);
         } catch (JsonProcessingException e) {
             throw new LscServiceException(e);
-        } finally {
-            if (response != null) {
-                response.close();
-            }
         }
         return resources;
     }
-
+    
+    private boolean isIdFilter(Optional<String> filter, String pivotName) {
+        return filter.filter(f -> f.contains(ID + "=") || f.contains(pivotName + "=")).isPresent();
+    }
+    
+    private WebTarget buildListTarget(Optional<String> computedFilter, String pivotName, int startIndex, int resultsPerPage) {
+        WebTarget currentTarget = target.path(entity);
+        if (domain.isPresent()) {
+            currentTarget = currentTarget.queryParam("domain", domain.get());
+        }
+        if (computedFilter.isPresent()) {
+            currentTarget = currentTarget.queryParam("filter", computedFilter.get());
+        }
+        String pivotFetchedAttrs = pivotName.equalsIgnoreCase(ID) ? ID : ID + "," + pivotName;
+        currentTarget = currentTarget.queryParam(ATTRIBUTES_PARAM, pivotFetchedAttrs);
+        if (resultsPerPage > 0) {
+        	currentTarget = currentTarget.queryParam("startIndex", startIndex).queryParam("count", resultsPerPage);
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
+        }
+        return currentTarget;
+    }
+    
+    private List<Map> fetchPage(WebTarget currentTarget) throws LscServiceException, JsonProcessingException {
+        Response response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
+        try {
+            if (!checkResponse(response)) {
+                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
+                LOGGER.error(errorMessage);
+                throw new LscServiceException(errorMessage);
+            }
+            Map<String, Object> results = mapper.readValue(response.readEntity(String.class), Map.class);
+            if (results != null && results.get(RESOURCES) != null) {
+                return (List<Map>) results.get(RESOURCES);
+            }
+            return List.of();
+        } finally {
+            response.close();
+        }
+    }
+    
+    private LscDatasets toDatasets(Map resource, String pivotName) {
+        LscDatasets datasets = new LscDatasets();
+        datasets.put(ID, resource.get(ID));
+        pivot.ifPresent(p -> datasets.put(p, resource.get(p)));
+        return datasets;
+    }
+    
     public Map<String, Object> getDetails(String id) {
         Response response = null;
         try {
