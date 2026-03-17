@@ -4,5 +4,5 @@ coverage:
   range: 60...90
   
 ignore:
-    - "src/main/java/it/pz8/lsc/plugins/connectors/scim/bean/ScimValueOperation.java"  
+    - "src/main/java/it/pz8/lsc/plugins/connectors/scim/rs/DefaultClientBuilderCustomizer.java"  
     - "src/main/java/it/pz8/lsc/plugins/connectors/scim/generated"
