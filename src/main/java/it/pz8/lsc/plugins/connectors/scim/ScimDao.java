@@ -266,7 +266,7 @@ public class ScimDao {
                 LOGGER.debug(String.format("SCIM Response :\r%n%s", results));
             }
             if (results!=null && results.get(RESOURCES)!=null) {
-                List<Map> resourcesMap = (List)results.get(RESOURCES);
+                List<Map> resourcesMap = (List<Map>)results.get(RESOURCES);
                 switch (resourcesMap.size()) {
                 case 0:
                     throw new NotFoundException(String.format("%s %s cannot be found by pivot", getEntityName(), pivotValue));
