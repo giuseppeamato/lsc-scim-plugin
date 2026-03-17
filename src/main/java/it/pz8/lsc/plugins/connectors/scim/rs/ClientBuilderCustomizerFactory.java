@@ -19,7 +19,7 @@ public final class ClientBuilderCustomizerFactory {
                     .getDeclaredConstructor()
                     .newInstance();
         } catch (Exception e) {
-            throw new RuntimeException("Cannot instantiate ClientBuilderCustomizer", e);
+            throw new IllegalStateException("Cannot instantiate ClientBuilderCustomizer", e);
         }
     }
 	

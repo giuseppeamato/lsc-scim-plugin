@@ -311,7 +311,7 @@ public class ScimDao {
                 if (isMultivaluedAttribute(attributeModification.getAttributeName())) {
                     String attrName = getMultivaluedAttributeName(attributeModification.getAttributeName());
                     String attrIdx = getMultivaluedAttributeIndex(attributeModification.getAttributeName());
-                    List<Object> multivalues =  (List<Object>)Optional.ofNullable(entityattributes.get(attrName)).orElse(new ArrayList());
+                    List<Object> multivalues =  (List<Object>)Optional.ofNullable(entityattributes.get(attrName)).orElse(new ArrayList<Object>());
                     if (StringUtils.isBlank(attrIdx)) {
                         multivalues.addAll(attributeModification.getValues());
                     } else {

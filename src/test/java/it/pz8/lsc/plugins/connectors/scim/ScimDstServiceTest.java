@@ -123,8 +123,7 @@ class ScimDstServiceTest {
     void getListPivots() throws LscServiceException {
         testDstService = new ScimDstService(task);
         Map<String, LscDatasets> bean = testDstService.getListPivots();
-        assertThat(bean).isNotNull();
-        assertThat(bean).isNotEmpty();
+        assertThat(bean).isNotNull().isNotEmpty();
     }
 
     @Test
