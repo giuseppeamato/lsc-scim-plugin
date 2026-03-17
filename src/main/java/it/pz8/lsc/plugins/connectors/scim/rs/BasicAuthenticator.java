@@ -1,4 +1,4 @@
-package it.pz8.lsc.plugins.connectors.scim;
+package it.pz8.lsc.plugins.connectors.scim.rs;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

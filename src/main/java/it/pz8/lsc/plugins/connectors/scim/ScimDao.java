@@ -1,6 +1,7 @@
 package it.pz8.lsc.plugins.connectors.scim;
 
-import static org.lsc.LscDatasetModification.LscDatasetModificationType.*;
+import static org.lsc.LscDatasetModification.LscDatasetModificationType.DELETE_VALUES;
+import static org.lsc.LscDatasetModification.LscDatasetModificationType.REPLACE_VALUES;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,14 +16,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
@@ -56,6 +49,9 @@ import it.pz8.lsc.plugins.connectors.scim.bean.ScimPathOperation;
 import it.pz8.lsc.plugins.connectors.scim.bean.ValueType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
+import it.pz8.lsc.plugins.connectors.scim.rs.BasicAuthenticator;
+import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizer;
+import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizerFactory;
 
 /**
  * @author Giuseppe Amato
@@ -109,26 +105,12 @@ public class ScimDao {
         this.excludedAttributes = getStringParameter(settings.getExcludedAttributes());
         this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
         this.namespaces = settings.getSchema()!=null?settings.getSchema().getNamespace():new ArrayList<>();
-
+        
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
                 .register(new BasicAuthenticator(connection.getUsername(), connection.getPassword()));
-        if (Boolean.getBoolean("lsc.scim.ssl.disable.verify")) {
-            LOGGER.warn("SSL certificate verification is disabled (lsc.scim.ssl.disable.verify=true)");
-            try {
-                SSLContext sslContext = SSLContext.getInstance("TLS");
-                sslContext.init(null, new TrustManager[]{
-                    new X509TrustManager() {
-                        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
-                        public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-                        public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-                    }
-                }, new SecureRandom());
-                clientBuilder.sslContext(sslContext).hostnameVerifier((hostname, session) -> true);
-            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-                LOGGER.error("Failed to disable SSL verification", e);
-            }
-        }
+        ClientBuilderCustomizerFactory.create().customize(clientBuilder);
+
         Client client = clientBuilder.build();
         target = client.target(connection.getUrl());
     }

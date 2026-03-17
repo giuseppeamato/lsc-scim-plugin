@@ -16,11 +16,6 @@ public class ScimPathOperation extends ScimOperation implements Serializable {
     private String path;
     private Object value;
 
-    public ScimPathOperation(String op, String path)  {
-        this.op = op;
-        this.path = path;
-    }
-
     public ScimPathOperation(String op, String path, Object value)  {
         this.op = op;
         this.path = path;

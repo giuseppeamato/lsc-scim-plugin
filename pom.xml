@@ -124,10 +124,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.0</version>
                 <configuration>
-                    <systemPropertyVariables>
-                        <!-- Disables SSL certificate verification in ScimDao for functional tests -->
-                        <lsc.scim.ssl.disable.verify>true</lsc.scim.ssl.disable.verify>
-                    </systemPropertyVariables>
                     <!-- Required for Jersey HttpUrlConnectorProvider.SET_METHOD_WORKAROUND on Java 9+ -->
                     <argLine>${argLine} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED</argLine>
                 </configuration>
