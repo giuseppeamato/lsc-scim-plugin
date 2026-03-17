@@ -77,10 +77,6 @@ public class ScimDao {
 
     private final String entity;
     
-    /**
-     * @deprecated
-     */
-    @Deprecated
     private final Optional<String> sourcePivot;
     private final Optional<String> pivot;
     private final Optional<String> domain;
@@ -123,11 +119,6 @@ public class ScimDao {
         return getList(filter);
     }
 
-    /**
-     * @deprecated
-     * Next release will relies on pivotTransformation feature of LSC 2.2
-     */
-    @Deprecated
     public String getSourcePivotName() {
         return sourcePivot.map(p -> p).orElse(getPivotName());
     }
