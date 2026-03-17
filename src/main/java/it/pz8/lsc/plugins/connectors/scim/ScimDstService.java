@@ -127,7 +127,7 @@ public class ScimDstService implements IWritableService {
                     result = dao.delete(lm.getMainIdentifier());
                     break;
                 default:
-                    LOGGER.error(String.format("Unknown operation %s", lm.getOperation()));
+                    LOGGER.error("Unknown operation {}", lm.getOperation());
                     result = false;
                 }
             }
