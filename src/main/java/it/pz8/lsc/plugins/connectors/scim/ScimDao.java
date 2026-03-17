@@ -142,7 +142,7 @@ public class ScimDao {
         int resultsPerPage = isIdFilter(computedFilter, pivotName) ? 0 : pageSize.orElse(PAGESIZE_DEFAULT_VALUE);
         int startIndex = 1;
         try {
-            List<Map> page;
+            List<LinkedHashMap> page;
             do {
                 WebTarget currentTarget = buildListTarget(computedFilter, pivotName, startIndex, resultsPerPage);
                 page = fetchPage(currentTarget);
@@ -181,7 +181,7 @@ public class ScimDao {
         return currentTarget;
     }
     
-    private List<Map> fetchPage(WebTarget currentTarget) throws LscServiceException, JsonProcessingException {
+    private List<LinkedHashMap> fetchPage(WebTarget currentTarget) throws LscServiceException, JsonProcessingException {
         Response response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
         try {
             if (!checkResponse(response)) {
@@ -189,9 +189,9 @@ public class ScimDao {
                 LOGGER.error(errorMessage);
                 throw new LscServiceException(errorMessage);
             }
-            Map<String, Object> results = mapper.readValue(response.readEntity(String.class), Map.class);
+            LinkedHashMap<String, Object> results = mapper.readValue(response.readEntity(String.class), LinkedHashMap.class);
             if (results != null && results.get(RESOURCES) != null) {
-                return (List<Map>) results.get(RESOURCES);
+                return (List<LinkedHashMap>) results.get(RESOURCES);
             }
             return List.of();
         } finally {
