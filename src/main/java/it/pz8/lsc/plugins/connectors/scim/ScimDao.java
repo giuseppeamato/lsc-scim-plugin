@@ -295,7 +295,7 @@ public class ScimDao {
         return getList(Optional.of(buildPivotFilter(pivotValue))).entrySet().stream().findFirst();
     }
 
-    public boolean create(LscModifications lm) throws LscServiceException {
+    public boolean create(LscModifications lm) {
         Response response = null;
         boolean result = false;
         try {
@@ -522,7 +522,7 @@ public class ScimDao {
     private Map<String, Object> processFlatDiffs(Map<String, Object> flattenDiffs) {
         List<String> types = flattenDiffs.keySet().stream()
                 .filter(key -> ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "].")) || key.endsWith("]") )
-                .collect(Collectors.toList());
+                .toList();
         for (String key : types) {
             if (key.endsWith("]")) {
                 String newKey = getMultivaluedAttributeName(key)+"[]";
