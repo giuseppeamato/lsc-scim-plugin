@@ -28,7 +28,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import com.google.common.collect.ImmutableMap;
 
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
-import it.pz8.lsc.plugins.connectors.scim.rs.InsecureTestClientBuilderCustomizer;
 
 /**
  * @author Giuseppe Amato
@@ -58,7 +57,6 @@ class ScimSrcServiceTest {
 
     @BeforeAll
     static void setup() {
-    	System.setProperty("clientBuilderCustomizer.class", InsecureTestClientBuilderCustomizer.class.getName());
         wso2ids = new GenericContainer<>(IMAGE_NAME);
         wso2ids.withExposedPorts(EXPOSED_PORT);
         wso2ids.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(TIMEOUT)));        

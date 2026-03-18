@@ -3,6 +3,7 @@ package it.pz8.lsc.plugins.connectors.scim;
 import static org.lsc.LscDatasetModification.LscDatasetModificationType.DELETE_VALUES;
 import static org.lsc.LscDatasetModification.LscDatasetModificationType.REPLACE_VALUES;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,9 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.NotFoundException;
@@ -24,8 +28,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import java.io.Serializable;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +53,7 @@ import it.pz8.lsc.plugins.connectors.scim.bean.ValueType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
 import it.pz8.lsc.plugins.connectors.scim.rs.BasicAuthenticator;
-import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizerFactory;
+import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizer;
 
 /**
  * @author Giuseppe Amato
@@ -74,7 +76,10 @@ public class ScimDao {
     private static final int PAGESIZE_DEFAULT_VALUE = 0;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
-
+    private static final List<ClientBuilderCustomizer> CLIENT_CUSTOMIZERS = 
+    		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false)
+    					 .collect(Collectors.toList());
+    
     private final String entity;
     
     private final Optional<String> sourcePivot;
@@ -105,7 +110,7 @@ public class ScimDao {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
                 .register(new BasicAuthenticator(connection.getUsername(), connection.getPassword()));
-        ClientBuilderCustomizerFactory.create().customize(clientBuilder);
+        CLIENT_CUSTOMIZERS.forEach(c -> c.customize(clientBuilder));
 
         Client client = clientBuilder.build();
         target = client.target(connection.getUrl());

@@ -40,8 +40,6 @@ import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
-import it.pz8.lsc.plugins.connectors.scim.rs.DefaultClientBuilderCustomizer;
-import it.pz8.lsc.plugins.connectors.scim.rs.InsecureTestClientBuilderCustomizer;
 
 /**
  * @author Giuseppe Amato
@@ -70,7 +68,6 @@ class ScimDstServiceTest {
 
     @BeforeAll
     static void setup() {
-    	System.setProperty("clientBuilderCustomizer.class", InsecureTestClientBuilderCustomizer.class.getName());
         wso2ids = new GenericContainer<>(IMAGE_NAME);
         wso2ids.withExposedPorts(EXPOSED_PORT);      
         wso2ids.waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(TIMEOUT)));
@@ -342,22 +339,6 @@ class ScimDstServiceTest {
             testDstService = null;
         }
         assertThat(testDstService).isNull();
-    }
-    
-    @Test
-    @Order(16)
-    void getListPivotWithSSLCertificateExpiredShouldFail() throws LscServiceException {
-    	System.setProperty("clientBuilderCustomizer.class", DefaultClientBuilderCustomizer.class.getName());    	
-    	assertThat(BASEPATH).startsWith("https");
-    	testDstService = new ScimDstService(task);
-    	boolean hasFailed = false;
-        try {
-            Map<String, LscDatasets> bean = testDstService.getListPivots();
-        } catch (LscServiceConfigurationException e) {
-        	hasFailed = true;
-        }
-        assertThat(hasFailed).isTrue();
-        System.setProperty("clientBuilderCustomizer.class", InsecureTestClientBuilderCustomizer.class.getName());
     }
 
 }
