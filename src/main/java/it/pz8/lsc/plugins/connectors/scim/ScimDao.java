@@ -16,7 +16,6 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.ws.rs.HttpMethod;
@@ -77,8 +76,7 @@ public class ScimDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
     private static final List<ClientBuilderCustomizer> CLIENT_CUSTOMIZERS = 
-    		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false)
-    					 .collect(Collectors.toList());
+    		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false).toList();
     
     private final String entity;
     

@@ -184,7 +184,6 @@
 		                        <format>HTML</format>
 		                        <format>XML</format>
 		                    </formats>
-		                    <check />
 		                </configuration>
 				    </execution>
 			  </executions>

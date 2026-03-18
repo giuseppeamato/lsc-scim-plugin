@@ -14,6 +14,7 @@ import javax.naming.NamingException;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -76,7 +77,10 @@ class ScimDstServiceTest {
 
         mappedPort = wso2ids.getMappedPort(EXPOSED_PORT);
         LOGGER.info(String.format("Mapped port: %d:%d", mappedPort, EXPOSED_PORT));
-        
+    }
+
+    @BeforeEach
+    void testSetup() {
         pluginDestinationService = mock(PluginDestinationServiceType.class);
         serviceSettings = mock(ScimServiceSettings.class);
         task = mock(TaskType.class);
@@ -99,7 +103,7 @@ class ScimDstServiceTest {
         when(task.getBean()).thenReturn("org.lsc.beans.SimpleBean");
         when(task.getPluginDestinationService()).thenReturn(pluginDestinationService);
     }
-  
+
     static SchemasType createScimSchema() {
         List<NamespaceType> nsList = new ArrayList<>();
         NamespaceType ns = new NamespaceType();
@@ -110,7 +114,7 @@ class ScimDstServiceTest {
         schema.getNamespace().addAll(nsList);
         return schema;
     }
-    
+
     @AfterAll
     static void close() {
         wso2ids.close();
@@ -133,7 +137,7 @@ class ScimDstServiceTest {
         boolean result = testDstService.apply(mod);
         assertThat(result).isTrue();
     }
-    
+
     @Test
     @Order(3)
     void modificationWithoutMainIdShouldFail() throws LscServiceException {
@@ -216,7 +220,7 @@ class ScimDstServiceTest {
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("emails[type eq work]")).isEqualTo("work@localhost.com");        
     }
-    
+
     @Test
     @Order(8)
     void updateExtendedSchemaAttribute() throws LscServiceException, NamingException {
@@ -232,7 +236,7 @@ class ScimDstServiceTest {
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER.department")).isEqualTo("IT");        
     }
-    
+
     @Test
     @Order(9)
     void removeUser() throws LscServiceException {
@@ -250,7 +254,7 @@ class ScimDstServiceTest {
         bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean).isNull();        
     }
-    
+
     @Test
     @Order(10)
     void addGroup() throws LscServiceException {
@@ -273,6 +277,9 @@ class ScimDstServiceTest {
     @Test
     @Order(11)
     void updateMembership() throws LscServiceException, NamingException {
+    	when(serviceSettings.getEntity()).thenReturn("Groups");
+    	when(serviceSettings.getPivot()).thenReturn("displayName");
+        when(serviceSettings.getSourcePivot()).thenReturn("cn");
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("developer");
@@ -286,10 +293,13 @@ class ScimDstServiceTest {
         IBean bean = testDstService.getBean("developer", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("members[display eq admin]")).isNotNull();
     }
-    
+
     @Test
     @Order(12)
     void removeGroup() throws LscServiceException {
+        when(serviceSettings.getEntity()).thenReturn("Groups");
+        when(serviceSettings.getPivot()).thenReturn("displayName");
+        when(serviceSettings.getSourcePivot()).thenReturn("cn");
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("cn", "developer");
@@ -305,6 +315,36 @@ class ScimDstServiceTest {
 
     @Test
     @Order(13)
+    void taskBeanWithoutPublicNoArgContructorShouldFail() throws LscServiceException {
+    	when(task.getBean()).thenReturn("java.lang.Integer");
+    	IBean bean = null;
+        try {
+            testDstService = new ScimDstService(task);
+            LscDatasets lscDatasets = new LscDatasets();
+            lscDatasets.put("uid", "pippo");
+            bean = testDstService.getBean("pippo", lscDatasets, true);
+        } catch (LscServiceConfigurationException e) {
+        	e.printStackTrace();
+            testDstService = null;
+        }
+        assertThat(bean).isNull();
+    }
+
+    @Test
+    @Order(14)
+    void taskWithIncorrectBeanClassShouldFail() throws LscServiceException {
+    	when(task.getBean()).thenReturn("java.lang.WrongClass");
+        try {
+            testDstService = new ScimDstService(task);
+        } catch (LscServiceConfigurationException e) {
+        	e.printStackTrace();
+            testDstService = null;
+        }
+        assertThat(testDstService).isNull();
+    }
+
+    @Test
+    @Order(15)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getAny()).thenReturn(null);
         try {
@@ -315,9 +355,9 @@ class ScimDstServiceTest {
         assertThat(testDstService).isNull();
         when(pluginDestinationService.getAny()).thenReturn(List.of(serviceSettings));
     }
-    
+
     @Test
-    @Order(14)
+    @Order(16)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         try {
@@ -330,7 +370,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(15)
+    @Order(17)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
         try {

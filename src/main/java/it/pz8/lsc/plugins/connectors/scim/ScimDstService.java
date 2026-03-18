@@ -10,7 +10,6 @@ import java.util.Map;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.lsc.LscDatasets;
@@ -91,7 +90,7 @@ public class ScimDstService implements IWritableService {
             return null;
         } catch (NoSuchMethodException | InvocationTargetException e) {
             throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
-        } catch (ProcessingException | WebApplicationException e) {
+        } catch (ProcessingException e) {
             throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", pivotValue, e), e);
         } catch (InstantiationException | IllegalAccessException e) {
             throw new LscServiceException(String.format("Bad class name: %s", e), e);
@@ -101,42 +100,37 @@ public class ScimDstService implements IWritableService {
     @Override
     public boolean apply(LscModifications lm) throws LscServiceException {
         boolean result = false;
-        try {
-            if (lm.getMainIdentifier() == null) {
-                LOGGER.error("MainIdentifier is needed to update");
-            } else {
-                switch (lm.getOperation()) {
-                case CHANGE_ID:
-                    LOGGER.warn("Trying to change ID of SCIM entry, impossible operation, ignored.");
-                    // Silently return without doing anything
-                    result = true;
-                    break;
-                case CREATE_OBJECT:
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(String.format("Creating SCIM entry: %s", lm.getMainIdentifier()));
-                    }
-                    result = dao.create(lm);
-                    break;
-                case UPDATE_OBJECT:
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(String.format("Updating SCIM entry: %s", lm.getMainIdentifier()));
-                    }
-                    result = dao.update(lm);
-                    break;
-                case DELETE_OBJECT:
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(String.format("Deleting SCIM entry: %s", lm.getMainIdentifier()));
-                    }
-                    result = dao.delete(lm.getMainIdentifier());
-                    break;
-                default:
-                    LOGGER.error("Unknown operation {}", lm.getOperation());
-                    result = false;
+        if (lm.getMainIdentifier() == null) {
+            LOGGER.error("MainIdentifier is needed to update");
+        } else {
+            switch (lm.getOperation()) {
+            case CHANGE_ID:
+                LOGGER.warn("Trying to change ID of SCIM entry, impossible operation, ignored.");
+                // Silently return without doing anything
+                result = true;
+                break;
+            case CREATE_OBJECT:
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(String.format("Creating SCIM entry: %s", lm.getMainIdentifier()));
                 }
+                result = dao.create(lm);
+                break;
+            case UPDATE_OBJECT:
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(String.format("Updating SCIM entry: %s", lm.getMainIdentifier()));
+                }
+                result = dao.update(lm);
+                break;
+            case DELETE_OBJECT:
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(String.format("Deleting SCIM entry: %s", lm.getMainIdentifier()));
+                }
+                result = dao.delete(lm.getMainIdentifier());
+                break;
+            default:
+                LOGGER.error("Unknown operation {}", lm.getOperation());
+                result = false;
             }
-        } catch (ProcessingException e) {
-            LOGGER.error(String.format("ProcessingException while writing (%s)", e));
-            result = false;
         }
         return result;
     }
