@@ -10,7 +10,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.lsc.LscDatasets;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.PluginConnectionType;
@@ -33,6 +37,7 @@ import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
  * @author Giuseppe Amato
  *
  */
+@TestMethodOrder(OrderAnnotation.class)
 class ScimSrcServiceTest {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ScimSrcServiceTest.class);
@@ -63,8 +68,11 @@ class ScimSrcServiceTest {
         wso2ids.start();
     
         mappedPort = wso2ids.getMappedPort(EXPOSED_PORT);
-        LOGGER.info(String.format("Mapped port: %d:%d", mappedPort, EXPOSED_PORT));
-        
+        LOGGER.info("Mapped port: {}:{}", mappedPort, EXPOSED_PORT);
+    }
+
+    @BeforeEach
+    void testSetup() {
         pluginSourceService = mock(PluginSourceServiceType.class);
         pluginDestinationService = mock(PluginDestinationServiceType.class);
         serviceSettings = mock(ScimServiceSettings.class);
@@ -81,7 +89,7 @@ class ScimSrcServiceTest {
         when(serviceSettings.getEntity()).thenReturn("Users");
         when(task.getBean()).thenReturn("org.lsc.beans.SimpleBean");
         when(task.getPluginSourceService()).thenReturn(pluginSourceService);
-        when(task.getPluginDestinationService()).thenReturn(pluginDestinationService);
+        when(task.getPluginDestinationService()).thenReturn(pluginDestinationService);    	
     }
     
     @AfterAll
@@ -90,6 +98,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(1)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginSourceService.getAny()).thenReturn(null);
         ScimSrcService testSrcService;
@@ -103,6 +112,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(2)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         ScimSrcService testSrcService;
@@ -116,6 +126,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(3)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginSourceService.getConnection().getReference()).thenReturn(null);
         ScimSrcService testSrcService;
@@ -129,6 +140,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(4)
     void listPivotShouldReturnEmptyWhenNoResult() throws LscServiceException {
         when(serviceSettings.getFilter()).thenReturn("id eq 'pippo'");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -140,6 +152,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(5)
     void listPivotShouldReturnOneUserWhenOneResult() throws LscServiceException {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -155,6 +168,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(6)
     void getBeanShouldReturnNullWhenEmptyDataset() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -165,6 +179,7 @@ class ScimSrcServiceTest {
     }
 
     @Test
+    @Order(7)
     void getBeanShouldReturnNullWhenNoMatchingId() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -176,6 +191,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(8)
     void getBeanShouldReturnMainIdentifierSetToIdWhenDefaultPivot() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -189,6 +205,7 @@ class ScimSrcServiceTest {
     }
 
     @Test
+    @Order(9)
     void getBeanShouldReturnMainIdentifierSetToIdWhenMailAsPivot() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn("emails");
@@ -202,6 +219,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(10)
     void getBeanShouldReturnIdAndMailWhenMailAsPivot() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn("emails");
@@ -216,6 +234,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(11)
     void getBeanShouldReturnNullWhenNonExistingUserFromAnotherService() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn("userName");
@@ -228,6 +247,7 @@ class ScimSrcServiceTest {
     }    
     
     @Test
+    @Order(12)
     void getBeanShouldReturnBeanWithIdWhenFromAnotherService() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn("userName");
@@ -242,6 +262,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
+    @Order(13)
     void listPivotShouldReturnEmptyWhenNoResultByFilter() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("userName co pippo");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -253,6 +274,7 @@ class ScimSrcServiceTest {
     }
 
     @Test
+    @Order(14)
     void getBeanShouldNotReturnEmailsWhenAttributesDoesntContainEmailsField() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -267,6 +289,7 @@ class ScimSrcServiceTest {
     }
 
     @Test 
+    @Order(15)
     void getBeanShouldNotReturnEmailsWhenExcludedAttributesContainsEmailsField() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
         when(serviceSettings.getPivot()).thenReturn(null);
@@ -280,4 +303,28 @@ class ScimSrcServiceTest {
         assertThat(bean.getDatasetFirstValueById("emails[]")).isBlank();
     }
 
+    @Test
+    @Order(16)
+    void taskBeanWithoutPublicNoArgContructorShouldFail() throws LscServiceException {
+    	when(task.getBean()).thenReturn("java.lang.Integer");
+        when(serviceSettings.getFilter()).thenReturn("");
+        when(serviceSettings.getPivot()).thenReturn("userName");
+        ScimSrcService testSrcService = new ScimSrcService(task);
+        Map<String, LscDatasets> pivots = testSrcService.getListPivots();
+        String firstUserPivotValue = pivots.keySet().stream().findFirst().get();
+        IBean bean = null;
+        try {
+            bean = testSrcService.getBean("id", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
+        } catch (LscServiceException e) {
+        	e.printStackTrace();
+        	bean = null;
+        }
+        assertThat(bean).isNull();
+        try {
+            bean = testSrcService.getBean("id", pivots.get(firstUserPivotValue), !FROM_SAME_SERVICE);
+        } catch (LscServiceException e) {
+        	bean = null;
+        }
+        assertThat(bean).isNull();
+    }
 }

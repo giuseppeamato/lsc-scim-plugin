@@ -76,7 +76,7 @@ class ScimDstServiceTest {
         wso2ids.start();
 
         mappedPort = wso2ids.getMappedPort(EXPOSED_PORT);
-        LOGGER.info(String.format("Mapped port: %d:%d", mappedPort, EXPOSED_PORT));
+        LOGGER.info("Mapped port: {}:{}", mappedPort, EXPOSED_PORT);
     }
 
     @BeforeEach

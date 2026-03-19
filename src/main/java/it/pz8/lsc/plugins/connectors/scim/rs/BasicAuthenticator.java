@@ -2,6 +2,7 @@ package it.pz8.lsc.plugins.connectors.scim.rs;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -30,7 +31,7 @@ public class BasicAuthenticator implements ClientRequestFilter {
 
     private String getBasicAuthentication() {
         String token = this.user + ":" + this.password;
-        return "Basic " + DatatypeConverter.printBase64Binary(token.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8));
     }
 
 }

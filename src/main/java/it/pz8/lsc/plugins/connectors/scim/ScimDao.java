@@ -167,9 +167,7 @@ public class ScimDao {
         if (resultsPerPage > 0) {
         	currentTarget = currentTarget.queryParam("startIndex", startIndex).queryParam("count", resultsPerPage);
         }
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Retrieve %s list from: %s - startIndex: %s - pageSize: %s ", entity, currentTarget.getUri().toString(), startIndex, resultsPerPage));
-        }
+        LOGGER.debug("Retrieve {} list from: {} - startIndex: {} - pageSize: {} ", new Object[] { entity, currentTarget.getUri().toString(), startIndex, resultsPerPage });
         return currentTarget;
     }
     
@@ -208,9 +206,7 @@ public class ScimDao {
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Retrieve %s detail from: %s ", getEntityName(), currentTarget.getUri().toString()));
-            }
+            LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri().toString());
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -221,9 +217,7 @@ public class ScimDao {
                 throw new ProcessingException(errorMessage);
             }
             Map<String, Object> detail = flatten(response.readEntity(String.class));
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Details :\r%n%s", detail));
-            }
+            LOGGER.debug("Details :\n{}", detail);
             return detail;           
         } finally {
             if (response != null) {
@@ -244,9 +238,7 @@ public class ScimDao {
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Retrieve %s detail from: %s ", getEntityName(), currentTarget.getUri().toString()));
-            }
+            LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri().toString());
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {              
                 String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
@@ -254,9 +246,7 @@ public class ScimDao {
                 throw new ProcessingException(errorMessage);
             }
             Map<String, Object> results = mapper.readValue(response.readEntity(String.class), LinkedHashMap.class);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("SCIM Response :\r%n%s", results));
-            }
+            LOGGER.debug("SCIM Response :\n{}", results);
             if (results!=null && results.get(RESOURCES)!=null) {
                 List<Map<String, Object>> resourcesMap = (List<Map<String, Object>>)results.get(RESOURCES);
                 switch (resourcesMap.size()) {
@@ -271,9 +261,7 @@ public class ScimDao {
             } else {
                 throw new NotFoundException(String.format("%s %s no results found", getEntityName(), pivotValue));
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Details :\r%n%s", detail));
-            }            
+            LOGGER.debug("Details :\n{}", detail);
         } catch (JsonProcessingException e) {
             throw new LscServiceException(e);
         } finally {
@@ -293,9 +281,7 @@ public class ScimDao {
         boolean result = false;
         try {
             WebTarget currentTarget = target.path(entity);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Create %s in: %s \r%n[%s]", getEntityName(), currentTarget.getUri().toString(), lm));
-            }
+            LOGGER.debug("Create {} in: {} \n[{}]", new Object[] { getEntityName(), currentTarget.getUri().toString(), lm });
             Map<String, Object> entityattributes = new HashMap<>();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             entityattributes.put(SCHEMAS, new ArrayList<String>());
@@ -315,9 +301,7 @@ public class ScimDao {
                 }
             }
             String unflattenDiffs = unflatten(entityattributes);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("SCIM payload: \r%n%s", unflattenDiffs));
-            }
+            LOGGER.debug("SCIM payload: \n{}", unflattenDiffs);
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(unflattenDiffs));
             if (!checkResponse(response)) {
                 LOGGER.error("Error {} ({}) while creating {}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName() });
@@ -325,7 +309,7 @@ public class ScimDao {
                 result = true;
             }
         } catch (Exception e) {
-            LOGGER.error(String.format("Error %s while creating %s: %s", e.getMessage(), getEntityName(), lm));
+            LOGGER.error("Error {} while creating {}: {}", new Object[] {e.getMessage(), getEntityName(), lm});
             return false;
         } finally {
             if (response != null) {
@@ -342,9 +326,7 @@ public class ScimDao {
             String id = getPivotName().equalsIgnoreCase(ID)?lm.getMainIdentifier():findFirstByPivot(lm.getMainIdentifier())
                     .map(entry -> entry.getValue().getStringValueAttribute(ID)).orElseThrow(() -> new LscServiceException("ID not found"));
             WebTarget currentTarget = target.path(entity).path(id);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Update %s in: %s ", getEntityName(), currentTarget.getUri().toString()));
-            }
+            LOGGER.debug("Update {} in: {} ", getEntityName(), currentTarget.getUri().toString());
             ScimPatchResource patchOp = new ScimPatchResource();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             for (LscDatasetModification diff : diffs) {
@@ -369,9 +351,7 @@ public class ScimDao {
             }
             if (!patchOp.getOperations().isEmpty()) {
                 String patchOpJson = mapper.writeValueAsString(patchOp);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(String.format("SCIM payload: %s", patchOpJson));
-                }
+                LOGGER.debug("SCIM payload: {}", patchOpJson);
                 response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).method(HttpMethod.PATCH, Entity.entity(patchOpJson, MediaType.APPLICATION_JSON));
                 if (!checkResponse(response)) {
                     LOGGER.error("Error {} ({}) while creating {} {}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier() });
@@ -380,7 +360,7 @@ public class ScimDao {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error(String.format("Error %s while updating %s: %s", e.getMessage(), getEntityName(), lm));
+            LOGGER.error("Error {} while updating {}: {}", new Object[] { e.getMessage(), getEntityName(), lm });
             return false;
         } finally {
             if (response != null) {
@@ -412,9 +392,7 @@ public class ScimDao {
                 }
             }
         }
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("op: %s, name: %s, value: %s", diff.getOperation(), path, value));
-        }
+        LOGGER.debug("op: {}, name: {}, value: {}", new Object[] { diff.getOperation(), path, value });
         return new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
     }
 
@@ -425,13 +403,10 @@ public class ScimDao {
             String id = getPivotName().equalsIgnoreCase(ID)?pivotValue:findFirstByPivot(pivotValue)
                     .map(entry -> entry.getValue().getStringValueAttribute(ID)).orElseThrow(() -> new LscServiceException("ID not found"));
             WebTarget currentTarget = target.path(entity).path(id);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Delete %s from: %s ", getEntityName(), currentTarget.getUri().toString()));
-            }
+            LOGGER.debug("Delete {} from: {} ", getEntityName(), currentTarget.getUri().toString());
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).delete();
             if (!checkResponse(response)) {
-                String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
-                LOGGER.error(errorMessage);
+                LOGGER.error(String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class)));
             } else {
                 result = true;
             }

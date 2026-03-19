@@ -72,9 +72,7 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
-        }
+    	LOGGER.debug("Call to getBean({}, {}, {})", new Object[]{ pivotRawValue, lscDatasets, fromSameService });
         String pivotName = dao.getPivotName();
         String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
         try {
@@ -86,7 +84,7 @@ public class ScimDstService implements IWritableService {
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
-            LOGGER.debug(String.format("id %s not found", pivotValue));
+            LOGGER.debug("id {} not found", pivotValue);
             return null;
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
@@ -108,21 +106,15 @@ public class ScimDstService implements IWritableService {
                 result = true;
                 break;
             case CREATE_OBJECT:
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(String.format("Creating SCIM entry: %s", lm.getMainIdentifier()));
-                }
+            	LOGGER.debug("Creating SCIM entry: {}", lm.getMainIdentifier());
                 result = dao.create(lm);
                 break;
             case UPDATE_OBJECT:
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(String.format("Updating SCIM entry: %s", lm.getMainIdentifier()));
-                }
+            	LOGGER.debug("Updating SCIM entry: {}", lm.getMainIdentifier());
                 result = dao.update(lm);
                 break;
             case DELETE_OBJECT:
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(String.format("Deleting SCIM entry: %s", lm.getMainIdentifier()));
-                }
+            	LOGGER.debug("Deleting SCIM entry: {}", lm.getMainIdentifier());
                 result = dao.delete(lm.getMainIdentifier());
                 break;
             default:

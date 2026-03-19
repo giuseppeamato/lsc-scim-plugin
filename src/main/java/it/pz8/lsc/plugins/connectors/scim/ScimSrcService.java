@@ -73,9 +73,7 @@ public class ScimSrcService implements IService {
 
     @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Call to getBean(%s, %s, %b)", pivotRawValue, lscDatasets, fromSameService));
-        }
+    	LOGGER.debug("Call to getBean({}, {}, {})", new Object[] { pivotRawValue, lscDatasets, fromSameService });
         if (lscDatasets.getAttributesNames().isEmpty()) {
             return null;
         }
@@ -99,14 +97,12 @@ public class ScimSrcService implements IService {
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
-            LOGGER.debug(String.format("id %s not found", idValue));
+            LOGGER.debug("id {} not found", idValue);
             return null;
-        } catch (NoSuchMethodException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
         } catch (ProcessingException | WebApplicationException e) {
             throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", idValue, e), e);
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new LscServiceException(String.format("Bad class name: %s (%s)", beanClass.getName(), e), e);
         }
     }
 
@@ -123,14 +119,12 @@ public class ScimSrcService implements IService {
                 return null;
             }
         } catch (NotFoundException e) {
-            LOGGER.debug(String.format("%s %s not found", pivotName, pivotValue));
+            LOGGER.debug("{} {} not found", pivotName, pivotValue);
             return null;
-        } catch (NoSuchMethodException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
         } catch (ProcessingException | WebApplicationException e) {
             throw new LscServiceException(String.format("Exception while getting bean %s/%s (%s)", pivotName, pivotValue, e), e);
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new LscServiceException(String.format("Bad class name: %s (%s) ", beanClass.getName(), e), e);
         }
     }
 
