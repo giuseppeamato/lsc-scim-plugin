@@ -73,7 +73,7 @@ public class ScimDao {
     public static final String EQ_OPERATOR = " eq ";
     private static final String HTTP_STATUS_TPL_MSG = "status: %d, message: %s";
     private static final int PAGESIZE_DEFAULT_VALUE = 0;
-    private final static Pattern MULTIVALUE_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
+    private static final Pattern MULTIVALUE_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
     private static final List<ClientBuilderCustomizer> CLIENT_CUSTOMIZERS = 
@@ -206,7 +206,7 @@ public class ScimDao {
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
             }
-            LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri().toString());
+            LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri());
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -238,7 +238,7 @@ public class ScimDao {
             if (excludedAttributes.isPresent()) {
                 currentTarget = currentTarget.queryParam("excludedAttributes", excludedAttributes.get());
             }
-            LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri().toString());
+            LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri());
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
             if (!checkResponse(response)) {              
                 String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
@@ -281,7 +281,7 @@ public class ScimDao {
         boolean result = false;
         try {
             WebTarget currentTarget = target.path(entity);
-            LOGGER.debug("Create {} in: {} \n[{}]", new Object[] { getEntityName(), currentTarget.getUri().toString(), lm });
+            LOGGER.debug("Create {} in: {} \n[{}]", new Object[] { getEntityName(), currentTarget.getUri(), lm });
             Map<String, Object> entityattributes = new HashMap<>();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             entityattributes.put(SCHEMAS, new ArrayList<String>());
