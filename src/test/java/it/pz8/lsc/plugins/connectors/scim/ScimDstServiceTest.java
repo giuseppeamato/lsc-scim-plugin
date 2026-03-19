@@ -239,6 +239,34 @@ class ScimDstServiceTest {
 
     @Test
     @Order(9)
+    void taskBeanWithoutPublicNoArgContructorShouldFail() throws LscServiceException {
+    	when(task.getBean()).thenReturn("java.lang.Integer");
+    	IBean bean = null;
+        try {
+            testDstService = new ScimDstService(task);
+            LscDatasets lscDatasets = new LscDatasets();
+            lscDatasets.put("uid", "admin");
+            bean = testDstService.getBean("admin", lscDatasets, true);
+        } catch (LscServiceException e) {
+            testDstService = null;
+        }
+        assertThat(bean).isNull();
+    }
+
+    @Test
+    @Order(10)
+    void taskWithIncorrectBeanClassShouldFail() throws LscServiceException {
+    	when(task.getBean()).thenReturn("java.lang.WrongClass");
+        try {
+            testDstService = new ScimDstService(task);
+        } catch (LscServiceConfigurationException e) {
+            testDstService = null;
+        }
+        assertThat(testDstService).isNull();
+    }
+
+    @Test
+    @Order(11)
     void removeUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -256,7 +284,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(10)
+    @Order(12)
     void addGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -275,7 +303,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(11)
+    @Order(13)
     void updateMembership() throws LscServiceException, NamingException {
     	when(serviceSettings.getEntity()).thenReturn("Groups");
     	when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -295,7 +323,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(12)
+    @Order(14)
     void removeGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -311,36 +339,6 @@ class ScimDstServiceTest {
         assertThat(result).isTrue();
         bean = testDstService.getBean("developer", lscDatasets, true);
         assertThat(bean).isNull();
-    }
-
-    @Test
-    @Order(13)
-    void taskBeanWithoutPublicNoArgContructorShouldFail() throws LscServiceException {
-    	when(task.getBean()).thenReturn("java.lang.Integer");
-    	IBean bean = null;
-        try {
-            testDstService = new ScimDstService(task);
-            LscDatasets lscDatasets = new LscDatasets();
-            lscDatasets.put("uid", "pippo");
-            bean = testDstService.getBean("pippo", lscDatasets, true);
-        } catch (LscServiceConfigurationException e) {
-        	e.printStackTrace();
-            testDstService = null;
-        }
-        assertThat(bean).isNull();
-    }
-
-    @Test
-    @Order(14)
-    void taskWithIncorrectBeanClassShouldFail() throws LscServiceException {
-    	when(task.getBean()).thenReturn("java.lang.WrongClass");
-        try {
-            testDstService = new ScimDstService(task);
-        } catch (LscServiceConfigurationException e) {
-        	e.printStackTrace();
-            testDstService = null;
-        }
-        assertThat(testDstService).isNull();
     }
 
     @Test
