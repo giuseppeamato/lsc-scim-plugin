@@ -88,12 +88,10 @@ public class ScimDstService implements IWritableService {
         } catch (NotFoundException e) {
             LOGGER.debug(String.format("id %s not found", pivotValue));
             return null;
-        } catch (NoSuchMethodException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new LscServiceException(String.format("Error while creating the instance of task bean %s", beanClass.getName()), e);
         } catch (ProcessingException e) {
             throw new LscServiceException(String.format("Exception while getting bean with id %s (%s)", pivotValue, e), e);
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new LscServiceException(String.format("Bad class name: %s", e), e);
         }
     }
 
