@@ -73,13 +73,13 @@ public class ScimDao {
     public static final String EQ_OPERATOR = " eq ";
     private static final String HTTP_STATUS_TPL_MSG = "status: %d, message: %s";
     private static final int PAGESIZE_DEFAULT_VALUE = 0;
-
+    private final static Pattern MULTIVALUE_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
     private static final List<ClientBuilderCustomizer> CLIENT_CUSTOMIZERS = 
     		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false).toList();
     
-    private final String entity;
-    
+    private final String entity;    
     private final Optional<String> sourcePivot;
     private final Optional<String> pivot;
     private final Optional<String> domain;
@@ -167,7 +167,7 @@ public class ScimDao {
         if (resultsPerPage > 0) {
         	currentTarget = currentTarget.queryParam("startIndex", startIndex).queryParam("count", resultsPerPage);
         }
-        LOGGER.debug("Retrieve {} list from: {} - startIndex: {} - pageSize: {} ", new Object[] { entity, currentTarget.getUri().toString(), startIndex, resultsPerPage });
+        LOGGER.debug("Retrieve {} list from: {} - startIndex: {} - pageSize: {} ", new Object[] { entity, currentTarget.getUri(), startIndex, resultsPerPage });
         return currentTarget;
     }
     
@@ -326,11 +326,11 @@ public class ScimDao {
             String id = getPivotName().equalsIgnoreCase(ID)?lm.getMainIdentifier():findFirstByPivot(lm.getMainIdentifier())
                     .map(entry -> entry.getValue().getStringValueAttribute(ID)).orElseThrow(() -> new LscServiceException("ID not found"));
             WebTarget currentTarget = target.path(entity).path(id);
-            LOGGER.debug("Update {} in: {} ", getEntityName(), currentTarget.getUri().toString());
+            LOGGER.debug("Update {} in: {} ", getEntityName(), currentTarget.getUri());
             ScimPatchResource patchOp = new ScimPatchResource();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             for (LscDatasetModification diff : diffs) {
-                String operation = null; 
+                String operation = null;
                 switch (diff.getOperation()) {
                 case DELETE_VALUES:
                     operation = OperationType.REMOVE.getName();
@@ -403,7 +403,7 @@ public class ScimDao {
             String id = getPivotName().equalsIgnoreCase(ID)?pivotValue:findFirstByPivot(pivotValue)
                     .map(entry -> entry.getValue().getStringValueAttribute(ID)).orElseThrow(() -> new LscServiceException("ID not found"));
             WebTarget currentTarget = target.path(entity).path(id);
-            LOGGER.debug("Delete {} from: {} ", getEntityName(), currentTarget.getUri().toString());
+            LOGGER.debug("Delete {} from: {} ", getEntityName(), currentTarget.getUri());
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).delete();
             if (!checkResponse(response)) {
                 LOGGER.error(String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class)));
@@ -462,13 +462,8 @@ public class ScimDao {
      * If the attribute is not multivalued, null is returned.
      */
     private String getMultivaluedAttributeIndex(String attributeName) {
-        String attrType = null;
-        Pattern p = Pattern.compile("\\[([^\\]]+)\\]");
-        Matcher m = p.matcher(attributeName);
-        if (m.find()) {
-            attrType = m.group(1);
-        }
-        return attrType;
+        Matcher m = MULTIVALUE_PATTERN.matcher(attributeName);
+        return m.find() ? m.group(1):null;
     } 
     
     /**
@@ -542,7 +537,7 @@ public class ScimDao {
     private ArrayList<Object> stringValuesToJsonValues(List<Object> stringValues) {
         ArrayList<Object> jsonValues = new ArrayList<>();
         for (Object entry : stringValues) {
-            if (!entry.toString().equals("")) {
+            if (!entry.toString().isEmpty()) {
                 try {
                     jsonValues.add(mapper.readTree(entry.toString()));
                 } catch (Exception e) {

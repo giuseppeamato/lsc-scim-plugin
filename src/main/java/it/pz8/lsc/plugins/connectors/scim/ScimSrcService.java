@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.ws.rs.NotFoundException;
@@ -93,7 +94,7 @@ public class ScimSrcService implements IService {
             IBean bean = beanClass.getDeclaredConstructor().newInstance();
             bean.setMainIdentifier(idValue);
             LscDatasets datasets = new LscDatasets();
-            entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null?new LinkedHashSet<>():entry.getValue()));
+            entity.forEach((key, val) -> datasets.put(key, Objects.requireNonNullElseGet(val, LinkedHashSet::new)) );
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
