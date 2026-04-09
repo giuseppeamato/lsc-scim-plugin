@@ -77,7 +77,7 @@ public class ScimSrcService implements IService {
 
     @Override
     public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-    	LOGGER.debug("Call to getBean({}, {}, {})", new Object[] { pivotRawValue, lscDatasets, fromSameService });
+    	LOGGER.debug("Call to getBean({}, {}, {})", pivotRawValue, lscDatasets, fromSameService);
         if (lscDatasets.getAttributesNames().isEmpty()) {
             return null;
         }
@@ -136,8 +136,7 @@ public class ScimSrcService implements IService {
 
 	@Override
 	public Collection<Class<? extends ConnectionType>> getSupportedConnectionType() {
-        Collection<Class<? extends ConnectionType>> list = new ArrayList<Class<? extends ConnectionType>>();
-        return list;
+		return new ArrayList<Class<? extends ConnectionType>>();
 	}
 
 }

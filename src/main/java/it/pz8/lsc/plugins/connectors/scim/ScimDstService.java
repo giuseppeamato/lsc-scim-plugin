@@ -75,7 +75,7 @@ public class ScimDstService implements IWritableService {
 
     @Override
     public IBean getBean(String pivotValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-    	LOGGER.debug("Call to getBean({}, {}, {})", new Object[]{ pivotValue, lscDatasets, fromSameService });
+    	LOGGER.debug("Call to getBean({}, {}, {})", pivotValue, lscDatasets, fromSameService);
         String pivotName = dao.getPivotName();
         try {
             Map<String, Object> entity = dao.getDetailsByPivot(pivotValue);
@@ -136,8 +136,7 @@ public class ScimDstService implements IWritableService {
 
 	@Override
 	public Collection<Class<? extends ConnectionType>> getSupportedConnectionType() {
-        Collection<Class<? extends ConnectionType>> list = new ArrayList<Class<? extends ConnectionType>>();
-        return list;
+        return new ArrayList<Class<? extends ConnectionType>>();
 	}
 
 }

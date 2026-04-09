@@ -160,7 +160,7 @@ public class ScimDao {
         if (resultsPerPage > 0) {
         	currentTarget = currentTarget.queryParam("startIndex", startIndex).queryParam("count", resultsPerPage);
         }
-        LOGGER.debug("Retrieve {} list from: {} - startIndex: {} - pageSize: {} ", new Object[] { entity, currentTarget.getUri(), startIndex, resultsPerPage });
+        LOGGER.debug("Retrieve {} list from: {} - startIndex: {} - pageSize: {} ", entity, currentTarget.getUri(), startIndex, resultsPerPage);
         return currentTarget;
     }
     
@@ -274,7 +274,7 @@ public class ScimDao {
         boolean result = false;
         try {
             WebTarget currentTarget = target.path(entity);
-            LOGGER.debug("Create {} in: {} \n[{}]", new Object[] { getEntityName(), currentTarget.getUri(), lm });
+            LOGGER.debug("Create {} in: {} \n[{}]", getEntityName(), currentTarget.getUri(), lm);
             Map<String, Object> entityattributes = new HashMap<>();
             List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             entityattributes.put(SCHEMAS, new ArrayList<String>());
@@ -299,12 +299,12 @@ public class ScimDao {
             if (!checkResponse(response)) {
             	response.bufferEntity();
             	String body = response.hasEntity() ? response.readEntity(String.class) : "<empty>";
-                LOGGER.error("Error {} ({}) while creating {}\r\n{}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName(), body });
+                LOGGER.error("Error {} ({}) while creating {}\r\n{}",  response.getStatus(), response.getStatusInfo(), getEntityName(), body);
             } else {
                 result = true;
             }
         } catch (Exception e) {
-            LOGGER.error("Error {} while creating {}: {}", new Object[] {e.getMessage(), getEntityName(), lm});
+            LOGGER.error("Error {} while creating {}: {}", e.getMessage(), getEntityName(), lm);
             return false;
         } finally {
             if (response != null) {
@@ -349,13 +349,13 @@ public class ScimDao {
                 LOGGER.debug("SCIM payload: {}", patchOpJson);
                 response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).method(HttpMethod.PATCH, Entity.entity(patchOpJson, MediaType.APPLICATION_JSON));
                 if (!checkResponse(response)) {
-                    LOGGER.error("Error {} ({}) while creating {} {}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier() });
+                    LOGGER.error("Error {} ({}) while creating {} {}",  response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier());
                 } else {
                     result = true;
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error {} while updating {}: {}", new Object[] { e.getMessage(), getEntityName(), lm });
+            LOGGER.error("Error {} while updating {}: {}", e.getMessage(), getEntityName(), lm);
             return false;
         } finally {
             if (response != null) {
@@ -387,7 +387,7 @@ public class ScimDao {
                 }
             }
         }
-        LOGGER.debug("op: {}, name: {}, value: {}", new Object[] { diff.getOperation(), path, value });
+        LOGGER.debug("op: {}, name: {}, value: {}", diff.getOperation(), path, value);
         return new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
     }
 
