@@ -97,7 +97,6 @@ class ScimDstServiceTest {
         when(serviceSettings.getSchema()).thenReturn(createScimSchema());
         when(serviceSettings.getFilter()).thenReturn(null);
         when(serviceSettings.getPivot()).thenReturn("userName");
-        when(serviceSettings.getSourcePivot()).thenReturn("uid");
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         when(task.getBean()).thenReturn("org.lsc.beans.SimpleBean");
@@ -107,7 +106,7 @@ class ScimDstServiceTest {
     static SchemasType createScimSchema() {
         List<NamespaceType> nsList = new ArrayList<>();
         NamespaceType ns = new NamespaceType();
-        ns.setAlias("ENTERPRISE_USER");
+        ns.setAlias("ENTERPRISE_USER_SCHEMA");
         ns.setUri("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User");
         nsList.add(ns);
         SchemasType schema = new SchemasType();
@@ -227,14 +226,14 @@ class ScimDstServiceTest {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "ENTERPRISE_USER.department", List.of("IT"));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "ENTERPRISE_USER_SCHEMA.department", List.of("IT"));
         lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("uid", "pippo");
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER.department")).isEqualTo("IT");        
+        assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")).isEqualTo("IT");        
     }
 
     @Test
@@ -288,7 +287,6 @@ class ScimDstServiceTest {
     void addGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
-        when(serviceSettings.getSourcePivot()).thenReturn("cn");
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
         lm.setMainIdentifer("developer");
@@ -307,7 +305,6 @@ class ScimDstServiceTest {
     void updateMembership() throws LscServiceException, NamingException {
     	when(serviceSettings.getEntity()).thenReturn("Groups");
     	when(serviceSettings.getPivot()).thenReturn("displayName");
-        when(serviceSettings.getSourcePivot()).thenReturn("cn");
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("developer");
@@ -327,7 +324,6 @@ class ScimDstServiceTest {
     void removeGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
-        when(serviceSettings.getSourcePivot()).thenReturn("cn");
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("cn", "developer");

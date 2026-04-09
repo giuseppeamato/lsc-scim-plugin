@@ -80,7 +80,6 @@ public class ScimDao {
     		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false).toList();
     
     private final String entity;    
-    private final Optional<String> sourcePivot;
     private final Optional<String> pivot;
     private final Optional<String> domain;
     private final Optional<Integer> pageSize;
@@ -96,7 +95,6 @@ public class ScimDao {
         LOGGER.debug("Init service");
         mapper = new ObjectMapper();
         this.entity = settings.getEntity();
-        this.sourcePivot = getStringParameter(settings.getSourcePivot());
         this.pivot = getStringParameter(settings.getPivot());
         this.domain = getStringParameter(settings.getDomain());
         this.filter = getStringParameter(settings.getFilter());
@@ -122,10 +120,6 @@ public class ScimDao {
         return getList(filter);
     }
 
-    public String getSourcePivotName() {
-        return sourcePivot.map(p -> p).orElse(getPivotName());
-    }
-    
     public String getPivotName() {
         return pivot.map(p -> p).orElse(ID);
     }
@@ -140,8 +134,7 @@ public class ScimDao {
             do {
                 WebTarget currentTarget = buildListTarget(computedFilter, pivotName, startIndex, resultsPerPage);
                 page = fetchPage(currentTarget);
-                page.forEach(resource -> resources.put(resource.get(pivotName).toString(), toDatasets(resource)
-                ));
+                page.forEach(resource -> resources.put(resource.get(pivotName).toString(), toDatasets(resource)));
                 startIndex += resultsPerPage;
             } while (!page.isEmpty() && resultsPerPage > 0);
         } catch (JsonProcessingException e) {
@@ -304,7 +297,9 @@ public class ScimDao {
             LOGGER.debug("SCIM payload: \n{}", unflattenDiffs);
             response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).post(Entity.json(unflattenDiffs));
             if (!checkResponse(response)) {
-                LOGGER.error("Error {} ({}) while creating {}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName() });
+            	response.bufferEntity();
+            	String body = response.hasEntity() ? response.readEntity(String.class) : "<empty>";
+                LOGGER.error("Error {} ({}) while creating {}\r\n{}",  new Object[] { response.getStatus(), response.getStatusInfo(), getEntityName(), body });
             } else {
                 result = true;
             }

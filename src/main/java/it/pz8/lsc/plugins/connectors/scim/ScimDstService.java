@@ -4,6 +4,8 @@ import static it.pz8.lsc.plugins.connectors.scim.ScimDao.GROUPS;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.USERS;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.lsc.LscDatasets;
 import org.lsc.LscModifications;
 import org.lsc.beans.IBean;
+import org.lsc.configuration.ConnectionType;
 import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.TaskType;
 import org.lsc.configuration.ValuesType;
@@ -71,10 +74,9 @@ public class ScimDstService implements IWritableService {
     }
 
     @Override
-    public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-    	LOGGER.debug("Call to getBean({}, {}, {})", new Object[]{ pivotRawValue, lscDatasets, fromSameService });
+    public IBean getBean(String pivotValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
+    	LOGGER.debug("Call to getBean({}, {}, {})", new Object[]{ pivotValue, lscDatasets, fromSameService });
         String pivotName = dao.getPivotName();
-        String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
         try {
             Map<String, Object> entity = dao.getDetailsByPivot(pivotValue);
             IBean bean = beanClass.getDeclaredConstructor().newInstance();
@@ -131,5 +133,11 @@ public class ScimDstService implements IWritableService {
         ValuesType writableAttrs = settings.getWritableAttributes();
         return (writableAttrs!=null)?writableAttrs.getString():null;
     }
+
+	@Override
+	public Collection<Class<? extends ConnectionType>> getSupportedConnectionType() {
+        Collection<Class<? extends ConnectionType>> list = new ArrayList<Class<? extends ConnectionType>>();
+        return list;
+	}
 
 }

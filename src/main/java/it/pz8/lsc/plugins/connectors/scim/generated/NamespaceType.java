@@ -2,7 +2,7 @@
 // Questo file è stato generato dall'architettura JavaTM per XML Binding (JAXB) Reference Implementation, v2.2.8-b130911.1802 
 // Vedere <a href="http://java.sun.com/xml/jaxb">http://java.sun.com/xml/jaxb</a> 
 // Qualsiasi modifica a questo file andrà persa durante la ricompilazione dello schema di origine. 
-// Generato il: 2020.08.07 alle 08:57:06 PM CEST 
+// Generato il: 2026.03.22 alle 02:30:51 AM CET 
 //
 
 
@@ -47,7 +47,7 @@ public class NamespaceType {
     protected String uri;
 
     /**
-     * Recupera il valore della propriet� alias.
+     * Recupera il valore della proprietà alias.
      * 
      * @return
      *     possible object is
@@ -59,7 +59,7 @@ public class NamespaceType {
     }
 
     /**
-     * Imposta il valore della propriet� alias.
+     * Imposta il valore della proprietà alias.
      * 
      * @param value
      *     allowed object is
@@ -71,7 +71,7 @@ public class NamespaceType {
     }
 
     /**
-     * Recupera il valore della propriet� uri.
+     * Recupera il valore della proprietà uri.
      * 
      * @return
      *     possible object is
@@ -83,7 +83,7 @@ public class NamespaceType {
     }
 
     /**
-     * Imposta il valore della propriet� uri.
+     * Imposta il valore della proprietà uri.
      * 
      * @param value
      *     allowed object is

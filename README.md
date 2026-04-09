@@ -26,7 +26,6 @@ Run LSC with flag **-DLSC.PLUGINS.PACKAGEPATH=it.pz8.lsc.plugins.connectors.scim
 
 ##### Service settings
 + `entity`: the entity to synchronize ('**Users**' or '**Groups**')
-+ `sourcePivot`: the pivot attribute name on the source side, default is `pivot` attribute value. (used only by SCIM Destination Service). This configuration parameter is deprecated, next release will relies on **pivotTransformation** feature of LSC 2.2. (OPTIONAL)
 + `pivot`: the pivot attribute name, default is **"id"** (OPTIONAL)
 + `domain`: The name of the user store to which filtering needs to be applied  (OPTIONAL) 
 + `pageSize`: Specifies the desired maximum number of query results (OPTIONAL) 
@@ -54,24 +53,10 @@ E.g.:
 ```xml 
 <scim:schema>
   <scim:namespace>
-    <scim:alias>ENTERPRISE_USER</scim:alias>
+    <scim:alias>ENTERPRISE_USER_SCHEMA</scim:alias>
     <scim:uri>urn:ietf:params:scim:schemas:extension:enterprise:2.0:User</scim:uri>
   </scim:namespace>
 </scim:schema>
-```
-
-##### Source Pivot
-
-During the sync phase, the destination service has to check the source dataset to find the ID of the item, if the pivot attribute name on the source doesn't have the same name of the destination counterpart,
-you have to set that name in the sourcePivot configuration parameter.
-Future versions of this plugin will relies on **pivotTransformation** feature of LSC 2.2.
-
-E.g.:
-
-```xml 
-<scim:entity>Users</scim:entity>
-<scim:sourcePivot>uid</scim:sourcePivot>
-<scim:pivot>userName</scim:pivot>
 ```
 
 ##### Attribute names
@@ -80,7 +65,7 @@ E.g.:
 + `multivalued attribute` 
     + `simple`: the attribute name must end with `[]`, e.g. **phoneNumbers[]**
     + `with path`: attribute with type discriminator must have the selector path into the square brackets, e.g. **emails[type eq work]**
-+ `extension schema attributes`: the attribute name contains the alias of the schema URI, e.g. **ENTERPRISE_USER.department**
++ `extension schema attributes`: the attribute name contains the alias of the schema URI, e.g. **ENTERPRISE_USER_SCHEMA.department**
 
 ##### Groups and membership
 Although a service can obtain role membership through `groups` or `roles` SCIM attribute of **User** entity, 

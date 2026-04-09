@@ -2,7 +2,7 @@
 // Questo file è stato generato dall'architettura JavaTM per XML Binding (JAXB) Reference Implementation, v2.2.8-b130911.1802 
 // Vedere <a href="http://java.sun.com/xml/jaxb">http://java.sun.com/xml/jaxb</a> 
 // Qualsiasi modifica a questo file andrà persa durante la ricompilazione dello schema di origine. 
-// Generato il: 2020.08.07 alle 08:57:06 PM CEST 
+// Generato il: 2026.03.22 alle 02:30:51 AM CET 
 //
 
 
@@ -25,19 +25,18 @@ import org.lsc.configuration.ValuesType;
  * <pre>
  * &lt;complexType>
  *   &lt;complexContent>
- *     &lt;extension base="{http://lsc-project.org/XSD/lsc-core-2.1.xsd}serviceType">
+ *     &lt;extension base="{http://lsc-project.org/XSD/lsc-core-2.2.xsd}serviceType">
  *       &lt;sequence>
  *         &lt;element name="entity" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="sourcePivot" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="pivot" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="domain" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="pageSize" type="{http://www.w3.org/2001/XMLSchema}int" minOccurs="0"/>
  *         &lt;element name="filter" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="attributes" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="excludedAttributes" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
- *         &lt;element name="schema" type="{http://lsc-project.org/XSD/lsc-scim-plugin-1.1.xsd}schemasType" minOccurs="0"/>
+ *         &lt;element name="schema" type="{http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd}schemasType" minOccurs="0"/>
  *         &lt;sequence>
- *           &lt;element name="writableAttributes" type="{http://lsc-project.org/XSD/lsc-core-2.1.xsd}valuesType" minOccurs="0"/>
+ *           &lt;element name="writableAttributes" type="{http://lsc-project.org/XSD/lsc-core-2.2.xsd}valuesType" minOccurs="0"/>
  *         &lt;/sequence>
  *       &lt;/sequence>
  *     &lt;/extension>
@@ -50,7 +49,6 @@ import org.lsc.configuration.ValuesType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
     "entity",
-    "sourcePivot",
     "pivot",
     "domain",
     "pageSize",
@@ -67,7 +65,6 @@ public class ScimServiceSettings
 
     @XmlElement(required = true)
     protected String entity;
-    protected String sourcePivot;
     protected String pivot;
     protected String domain;
     protected Integer pageSize;
@@ -78,7 +75,7 @@ public class ScimServiceSettings
     protected ValuesType writableAttributes;
 
     /**
-     * Recupera il valore della propriet� entity.
+     * Recupera il valore della proprietà entity.
      * 
      * @return
      *     possible object is
@@ -90,7 +87,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� entity.
+     * Imposta il valore della proprietà entity.
      * 
      * @param value
      *     allowed object is
@@ -102,31 +99,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� sourcePivot.
-     * 
-     * @return
-     *     possible object is
-     *     {@link String }
-     *     
-     */
-    public String getSourcePivot() {
-        return sourcePivot;
-    }
-
-    /**
-     * Imposta il valore della propriet� sourcePivot.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *     
-     */
-    public void setSourcePivot(String value) {
-        this.sourcePivot = value;
-    }
-
-    /**
-     * Recupera il valore della propriet� pivot.
+     * Recupera il valore della proprietà pivot.
      * 
      * @return
      *     possible object is
@@ -138,7 +111,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� pivot.
+     * Imposta il valore della proprietà pivot.
      * 
      * @param value
      *     allowed object is
@@ -150,7 +123,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� domain.
+     * Recupera il valore della proprietà domain.
      * 
      * @return
      *     possible object is
@@ -162,7 +135,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� domain.
+     * Imposta il valore della proprietà domain.
      * 
      * @param value
      *     allowed object is
@@ -174,7 +147,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� pageSize.
+     * Recupera il valore della proprietà pageSize.
      * 
      * @return
      *     possible object is
@@ -186,7 +159,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� pageSize.
+     * Imposta il valore della proprietà pageSize.
      * 
      * @param value
      *     allowed object is
@@ -198,7 +171,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� filter.
+     * Recupera il valore della proprietà filter.
      * 
      * @return
      *     possible object is
@@ -210,7 +183,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� filter.
+     * Imposta il valore della proprietà filter.
      * 
      * @param value
      *     allowed object is
@@ -222,7 +195,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� attributes.
+     * Recupera il valore della proprietà attributes.
      * 
      * @return
      *     possible object is
@@ -234,7 +207,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� attributes.
+     * Imposta il valore della proprietà attributes.
      * 
      * @param value
      *     allowed object is
@@ -246,7 +219,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� excludedAttributes.
+     * Recupera il valore della proprietà excludedAttributes.
      * 
      * @return
      *     possible object is
@@ -258,7 +231,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� excludedAttributes.
+     * Imposta il valore della proprietà excludedAttributes.
      * 
      * @param value
      *     allowed object is
@@ -270,7 +243,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� schema.
+     * Recupera il valore della proprietà schema.
      * 
      * @return
      *     possible object is
@@ -282,7 +255,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� schema.
+     * Imposta il valore della proprietà schema.
      * 
      * @param value
      *     allowed object is
@@ -294,7 +267,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Recupera il valore della propriet� writableAttributes.
+     * Recupera il valore della proprietà writableAttributes.
      * 
      * @return
      *     possible object is
@@ -306,7 +279,7 @@ public class ScimServiceSettings
     }
 
     /**
-     * Imposta il valore della propriet� writableAttributes.
+     * Imposta il valore della proprietà writableAttributes.
      * 
      * @param value
      *     allowed object is

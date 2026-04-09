@@ -5,6 +5,8 @@ import static it.pz8.lsc.plugins.connectors.scim.ScimDao.ID;
 import static it.pz8.lsc.plugins.connectors.scim.ScimDao.USERS;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +20,7 @@ import javax.ws.rs.WebApplicationException;
 import org.apache.commons.lang3.StringUtils;
 import org.lsc.LscDatasets;
 import org.lsc.beans.IBean;
+import org.lsc.configuration.ConnectionType;
 import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.TaskType;
 import org.lsc.exception.LscServiceCommunicationException;
@@ -86,6 +89,7 @@ public class ScimSrcService implements IService {
     }
 
     private IBean getBeanFromSameService(String idValue) throws LscServiceException {
+    	LOGGER.debug("Call to getBeanFromSameService({})", idValue);
         if (idValue == null) {
             return null;
         }
@@ -108,6 +112,7 @@ public class ScimSrcService implements IService {
     }
 
     private IBean getBeanForClean(String pivotValue) throws LscServiceException {
+    	LOGGER.debug("Call to getBeanForClean({})", pivotValue);
         String pivotName = dao.getPivotName();
         try {
             Optional<Entry<String, LscDatasets>> entity = dao.findFirstByPivot(pivotValue);
@@ -128,5 +133,11 @@ public class ScimSrcService implements IService {
             throw new LscServiceException(String.format("Exception while getting bean %s/%s (%s)", pivotName, pivotValue, e), e);
         }
     }
+
+	@Override
+	public Collection<Class<? extends ConnectionType>> getSupportedConnectionType() {
+        Collection<Class<? extends ConnectionType>> list = new ArrayList<Class<? extends ConnectionType>>();
+        return list;
+	}
 
 }

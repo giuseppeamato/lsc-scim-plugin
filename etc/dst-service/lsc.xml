@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
-<lsc xmlns="http://lsc-project.org/XSD/lsc-core-2.1.xsd" 
-    xmlns:scim="http://lsc-project.org/XSD/lsc-scim-plugin-1.1.xsd"
+<lsc xmlns="http://lsc-project.org/XSD/lsc-core-2.2.xsd" 
+    xmlns:scim="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd"
     revision="0">
     <connections>
         <ldapConnection>
@@ -56,26 +56,27 @@
                     <name>scim-usr-dst-service-settings</name>
                     <connection reference="scim-dst-conn" /> 
                     <scim:entity>Users</scim:entity>
-                    <scim:sourcePivot>uid</scim:sourcePivot>
                     <scim:pivot>userName</scim:pivot>
                     <scim:schema>
                         <scim:namespace>
-                            <scim:alias>ENTERPRISE_USER</scim:alias>
+                            <scim:alias>IDENTITY_USER_SCHEMA</scim:alias>
+                            <scim:uri>urn:scim:wso2:schema</scim:uri>
+                        </scim:namespace>
+                        <scim:namespace>
+                            <scim:alias>ENTERPRISE_USER_SCHEMA</scim:alias>
                             <scim:uri>urn:ietf:params:scim:schemas:extension:enterprise:2.0:User</scim:uri>
                         </scim:namespace>
                     </scim:schema>
                     <scim:writableAttributes>
                         <string>userName</string>
                         <string>password</string>
+   						<string>IDENTITY_USER_SCHEMA.askPassword</string>
                         <string>name.givenName</string>
                         <string>name.familyName</string>
-                        <string>ENTERPRISE_USER.department</string>
+                        <string>ENTERPRISE_USER_SCHEMA.department</string>
                         <string>emails[]</string>                        
                         <string>emails[type eq work]</string>                        
                         <string>phoneNumbers[]</string>
-                        <!--  
-                        <string>addresses[type eq work]</string>
-                        -->
                     </scim:writableAttributes>
                 </scim:scimServiceSettings>
             </pluginDestinationService>
@@ -97,9 +98,18 @@
                 </dataset>
                 <dataset>
                     <name>password</name>
-                    <policy>KEEP</policy>
+                    <policy>FORCE</policy>
                     <createValues>
-                        <string>123456</string>          
+						<string>
+							<![CDATA[rjs:"Temp!" + java.util.UUID.randomUUID().toString().substring(0,8);]]>
+						</string>						
+                    </createValues>
+                </dataset>
+                <dataset>
+                    <name>IDENTITY_USER_SCHEMA.askPassword</name>
+					<policy>FORCE</policy>
+                    <createValues>
+                        <string>"true"</string>          
                     </createValues>
                 </dataset>
                 <dataset>
@@ -127,7 +137,7 @@
                     </forceValues>                    
                 </dataset>
                 <dataset>
-                    <name>ENTERPRISE_USER.department</name>                    
+                    <name>ENTERPRISE_USER_SCHEMA.department</name>                    
                     <forceValues>
                         <string>srcBean.getDatasetValuesById("departmentNumber")</string>
                     </forceValues>
@@ -138,14 +148,6 @@
                         <string>srcBean.getDatasetFirstValueById("phoneNumbers")</string>
                     </forceValues>
                 </dataset>
-                <!--  
-                <dataset>
-                    <name>addresses[type eq work]</name>
-                    <forceValues>
-                        <string>srcBean.getDatasetFirstValueById("region")</string>
-                    </forceValues>
-                </dataset>
-                -->    
             </propertiesBasedSyncOptions>            
         </task>
         <task>
