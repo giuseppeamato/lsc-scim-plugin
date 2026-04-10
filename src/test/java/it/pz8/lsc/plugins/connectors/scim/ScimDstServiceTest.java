@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import org.lsc.LscDatasets;
 import org.lsc.LscModificationType;
 import org.lsc.LscModifications;
 import org.lsc.beans.IBean;
+import org.lsc.configuration.ConnectionType;
 import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.PluginDestinationServiceType;
 import org.lsc.configuration.ServiceType;
@@ -375,4 +377,11 @@ class ScimDstServiceTest {
         assertThat(testDstService).isNull();
     }
 
+    @Test 
+    @Order(18)
+    void returnSupportedConnectionType() throws Exception {
+    	ScimDstService testDstService = new ScimDstService(task);
+        Collection<Class<? extends ConnectionType>> supportedTypes = testDstService.getSupportedConnectionType();
+        assertThat(supportedTypes).contains(PluginConnectionType.class);
+    }
 }

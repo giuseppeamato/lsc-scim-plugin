@@ -136,7 +136,9 @@ public class ScimSrcService implements IService {
 
 	@Override
 	public Collection<Class<? extends ConnectionType>> getSupportedConnectionType() {
-		return new ArrayList<Class<? extends ConnectionType>>();
+		ArrayList<Class<? extends ConnectionType>> supportedConnectionTypes = new ArrayList<>();
+		supportedConnectionTypes.add(PluginConnectionType.class);
+		return supportedConnectionTypes;
 	}
 
 }
