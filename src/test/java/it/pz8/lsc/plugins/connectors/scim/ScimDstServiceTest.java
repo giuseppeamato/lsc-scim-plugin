@@ -237,9 +237,41 @@ class ScimDstServiceTest {
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")).isEqualTo("IT");        
     }
-
+    
     @Test
     @Order(9)
+    void removeAttribute() throws LscServiceException, NamingException {
+        testDstService = new ScimDstService(task);
+        LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
+        lm.setMainIdentifer("pippo");
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.DELETE_VALUES, "ENTERPRISE_USER_SCHEMA.department", List.of("IT"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
+        boolean result = testDstService.apply(lm);
+        assertThat(result).isTrue();
+        LscDatasets lscDatasets = new LscDatasets();
+        lscDatasets.put("uid", "pippo");
+        IBean bean = testDstService.getBean("pippo", lscDatasets, true);
+        assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")).isNull();
+    }
+    
+    @Test
+    @Order(10)
+    void addAttribute() throws LscServiceException, NamingException {
+        testDstService = new ScimDstService(task);
+        LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
+        lm.setMainIdentifer("pippo");
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.ADD_VALUES, "ENTERPRISE_USER_SCHEMA.department", List.of("HR"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
+        boolean result = testDstService.apply(lm);
+        assertThat(result).isTrue();
+        LscDatasets lscDatasets = new LscDatasets();
+        lscDatasets.put("uid", "pippo");
+        IBean bean = testDstService.getBean("pippo", lscDatasets, true);
+        assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")).isEqualTo("HR");
+    }    
+
+    @Test
+    @Order(11)
     void taskBeanWithoutPublicNoArgContructorShouldFail() throws LscServiceException {
     	when(task.getBean()).thenReturn("java.lang.Integer");
     	IBean bean = null;
@@ -255,7 +287,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(10)
+    @Order(12)
     void taskWithIncorrectBeanClassShouldFail() throws LscServiceException {
     	when(task.getBean()).thenReturn("java.lang.WrongClass");
         try {
@@ -267,7 +299,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(11)
+    @Order(13)
     void removeUser() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -285,7 +317,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(12)
+    @Order(14)
     void addGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -303,7 +335,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(13)
+    @Order(15)
     void updateMembership() throws LscServiceException, NamingException {
     	when(serviceSettings.getEntity()).thenReturn("Groups");
     	when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -322,7 +354,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(14)
+    @Order(16)
     void removeGroup() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Groups");
         when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -340,7 +372,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(15)
+    @Order(17)
     void constructorWithoutSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getAny()).thenReturn(null);
         try {
@@ -353,7 +385,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(16)
+    @Order(18)
     void constructorWithIncorrectSettingsShouldFail() throws LscServiceException {
         when(serviceSettings.getEntity()).thenReturn("Utenti");
         try {
@@ -366,7 +398,7 @@ class ScimDstServiceTest {
     }
 
     @Test
-    @Order(17)
+    @Order(19)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
         try {
@@ -378,9 +410,9 @@ class ScimDstServiceTest {
     }
 
     @Test 
-    @Order(18)
+    @Order(20)
     void returnSupportedConnectionType() throws Exception {
-    	ScimDstService testDstService = new ScimDstService(task);
+    	testDstService = new ScimDstService(task);
         Collection<Class<? extends ConnectionType>> supportedTypes = testDstService.getSupportedConnectionType();
         assertThat(supportedTypes).contains(PluginConnectionType.class);
     }
