@@ -278,7 +278,7 @@ class ScimDstServiceTest {
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("uid", "pippo");
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")).isEqualTo("IT");
+        assertThat(bean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")).isEqualTo("HR");
         assertThat(bean.getDatasetFirstValueById("name.familyName")).isBlank();
     }
     
