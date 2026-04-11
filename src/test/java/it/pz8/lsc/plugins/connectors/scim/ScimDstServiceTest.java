@@ -31,6 +31,7 @@ import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.PluginDestinationServiceType;
 import org.lsc.configuration.ServiceType;
 import org.lsc.configuration.TaskType;
+import org.lsc.exception.LscServiceCommunicationException;
 import org.lsc.exception.LscServiceConfigurationException;
 import org.lsc.exception.LscServiceException;
 import org.slf4j.Logger;
@@ -296,7 +297,7 @@ class ScimDstServiceTest {
 
     @Test
     @Order(13)
-    void getDetailsByPivotsWithoutValues() throws LscServiceException, NamingException {
+    void getDetailsByPivotsWithoutValues() throws LscServiceException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("uid", "nobody");
@@ -449,5 +450,57 @@ class ScimDstServiceTest {
     	testDstService = new ScimDstService(task);
         Collection<Class<? extends ConnectionType>> supportedTypes = testDstService.getSupportedConnectionType();
         assertThat(supportedTypes).contains(PluginConnectionType.class);
+    }
+    
+    @Test
+    @Order(24)
+    void getListPivotsUnauthenticatedShouldFail() throws LscServiceException {
+    	when(connectionType.getPassword()).thenReturn("");
+    	Map<String, LscDatasets> bean = null;
+    	try {
+    		testDstService = new ScimDstService(task);
+    		bean = testDstService.getListPivots();
+    	} catch (LscServiceCommunicationException e) {
+    		testDstService = null;
+    	}
+    	assertThat(bean).isNull();
+    }
+    
+    @Test
+    @Order(24)
+    void getBeanUnauthenticatedShouldFail() throws LscServiceException {
+    	when(connectionType.getPassword()).thenReturn("");
+    	IBean bean = null;
+    	try {
+    		testDstService = new ScimDstService(task);
+    		LscDatasets lscDatasets = new LscDatasets();
+    		lscDatasets.put("uid", "pippo");
+    		bean = testDstService.getBean("pippo", lscDatasets, true);
+    	} catch (LscServiceException e) {
+    		testDstService = null;
+    	}
+    	assertThat(bean).isNull();
+    }
+    
+    @Test
+    @Order(25)
+    void addUserUnauthenticatedShouldFail() throws LscServiceException {
+    	when(connectionType.getPassword()).thenReturn("");
+    	testDstService = new ScimDstService(task);
+    	boolean result = false;
+    	try {
+    		LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
+    		lm.setMainIdentifer("pippo");
+    		LscDatasetModification username = new LscDatasetModification(ADD_VALUES, "userName", List.of("pippo"));
+    		LscDatasetModification password = new LscDatasetModification(ADD_VALUES, "password", List.of("123456"));
+    		LscDatasetModification firstname = new LscDatasetModification(ADD_VALUES, "name.givenName", List.of("Pippo"));
+    		LscDatasetModification lastname = new LscDatasetModification(ADD_VALUES, "name.familyName", List.of("Pezzotto"));
+    		LscDatasetModification email = new LscDatasetModification(ADD_VALUES, "emails[]", List.of("pippo@localhost.com"));
+    		lm.setLscAttributeModifications(List.of(username, password, firstname, lastname, email));
+    		result = testDstService.apply(lm);
+    	} catch (LscServiceCommunicationException e) {
+    		result = false;
+    	}
+		assertThat(result).isFalse();
     }
 }

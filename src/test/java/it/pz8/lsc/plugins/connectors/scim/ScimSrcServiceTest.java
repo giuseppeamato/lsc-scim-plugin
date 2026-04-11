@@ -318,7 +318,6 @@ class ScimSrcServiceTest {
         try {
             bean = testSrcService.getBean("id", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
         } catch (LscServiceException e) {
-        	e.printStackTrace();
         	bean = null;
         }
         assertThat(bean).isNull();
@@ -337,5 +336,18 @@ class ScimSrcServiceTest {
         Collection<Class<? extends ConnectionType>> supportedTypes = testSrcService.getSupportedConnectionType();
         assertThat(supportedTypes).contains(PluginConnectionType.class);
     }
-    
+
+    @Test
+    @Order(18)
+    void getBeanUnauthenticatedShouldFail() throws LscServiceException {
+    	when(connectionType.getPassword()).thenReturn("");
+    	IBean bean = null;
+    	try {
+    		ScimSrcService testSrcService = new ScimSrcService(task);
+    		bean = testSrcService.getBean("id", new LscDatasets(), FROM_SAME_SERVICE);
+    	} catch (LscServiceException e) {
+    		bean = null;
+    	}
+    	assertThat(bean).isNull();
+    }
 }
