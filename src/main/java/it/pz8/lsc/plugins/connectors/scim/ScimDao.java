@@ -97,12 +97,12 @@ public class ScimDao {
         this.entity = settings.getEntity();
         this.pivot = getStringParameter(settings.getPivot());
         this.domain = getStringParameter(settings.getDomain());
-        this.filter = getStringParameter(settings.getFilter());
-        this.attributes = getStringParameter(settings.getAttributes());
-        this.excludedAttributes = getStringParameter(settings.getExcludedAttributes());
-        this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
         this.namespaces = settings.getSchema()!=null?settings.getSchema().getNamespace():new ArrayList<>();
-        
+        this.filter = getStringParameter(settings.getFilter()).map(this::replaceAllAliases);
+        this.attributes = getStringParameter(settings.getAttributes()).map(this::replaceAllAliases);
+        this.excludedAttributes = getStringParameter(settings.getExcludedAttributes()).map(this::replaceAllAliases);
+        this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
+
         ClientBuilder clientBuilder = ClientBuilder.newBuilder()
                 .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
                 .register(new BasicAuthenticator(connection.getUsername(), connection.getPassword()));
@@ -514,7 +514,7 @@ public class ScimDao {
 
     /**
      * Converts attribute path with extension schema, replacing "." with ":".
-     * e.g.: "ENTERPRISE_USER.department" become "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department" 
+     * e.g.: "ENTERPRISE_USER_SCHEMA.department" become "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department" 
      */
     private String replaceAlias(String attributeName) {
         return namespaces.stream()
@@ -524,6 +524,18 @@ public class ScimDao {
                 .orElse(attributeName);
     }
 
+    /**
+     * Converts all aliases in the given input string.
+     * Intended for use in filter and attribute lists. 
+     */
+    private String replaceAllAliases(String input) {
+        String result = input;
+        for (NamespaceType ns : namespaces) {
+            result = StringUtils.replace(result, ns.getAlias(), ns.getUri());
+        }
+        return result;
+    }
+    
     private boolean hasValue(IBean bean, String attrName) {
         Set<Object> currentDestValue = bean.getDatasetById(attrName);
         return (currentDestValue!=null && !currentDestValue.isEmpty());
