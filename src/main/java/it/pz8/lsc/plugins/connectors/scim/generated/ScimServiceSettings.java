@@ -1,8 +1,8 @@
 //
-// Questo file è stato generato dall'architettura JavaTM per XML Binding (JAXB) Reference Implementation, v2.2.8-b130911.1802 
+// Questo fileè stato generato dall'architettura JavaTM per XML Binding (JAXB) Reference Implementation, v2.2.8-b130911.1802 
 // Vedere <a href="http://java.sun.com/xml/jaxb">http://java.sun.com/xml/jaxb</a> 
 // Qualsiasi modifica a questo file andrà persa durante la ricompilazione dello schema di origine. 
-// Generato il: 2026.03.22 alle 02:30:51 AM CET 
+// Generato il: 2026.04.15 alle 10:04:25 PM CEST 
 //
 
 
@@ -10,8 +10,11 @@ package it.pz8.lsc.plugins.connectors.scim.generated;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlIDREF;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import org.lsc.configuration.ServiceType;
 import org.lsc.configuration.ValuesType;
@@ -29,6 +32,18 @@ import org.lsc.configuration.ValuesType;
  *       &lt;sequence>
  *         &lt;element name="entity" type="{http://www.w3.org/2001/XMLSchema}string"/>
  *         &lt;element name="pivot" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+ *         &lt;element name="sourcePivot" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+ *         &lt;element name="sourceUUID" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
+ *         &lt;element name="cacheConnection" minOccurs="0">
+ *           &lt;complexType>
+ *             &lt;complexContent>
+ *               &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *                 &lt;attribute name="reference" use="required" type="{http://www.w3.org/2001/XMLSchema}IDREF" />
+ *                 &lt;attribute name="writeEnabled" use="required" type="{http://www.w3.org/2001/XMLSchema}boolean" />
+ *               &lt;/restriction>
+ *             &lt;/complexContent>
+ *           &lt;/complexType>
+ *         &lt;/element>
  *         &lt;element name="domain" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
  *         &lt;element name="pageSize" type="{http://www.w3.org/2001/XMLSchema}int" minOccurs="0"/>
  *         &lt;element name="filter" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/>
@@ -50,6 +65,9 @@ import org.lsc.configuration.ValuesType;
 @XmlType(name = "", propOrder = {
     "entity",
     "pivot",
+    "sourcePivot",
+    "sourceUUID",
+    "cacheConnection",
     "domain",
     "pageSize",
     "filter",
@@ -66,6 +84,9 @@ public class ScimServiceSettings
     @XmlElement(required = true)
     protected String entity;
     protected String pivot;
+    protected String sourcePivot;
+    protected String sourceUUID;
+    protected ScimServiceSettings.CacheConnection cacheConnection;
     protected String domain;
     protected Integer pageSize;
     protected String filter;
@@ -120,6 +141,78 @@ public class ScimServiceSettings
      */
     public void setPivot(String value) {
         this.pivot = value;
+    }
+
+    /**
+     * Recupera il valore della proprietà sourcePivot.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getSourcePivot() {
+        return sourcePivot;
+    }
+
+    /**
+     * Imposta il valore della proprietà sourcePivot.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setSourcePivot(String value) {
+        this.sourcePivot = value;
+    }
+
+    /**
+     * Recupera il valore della proprietà sourceUUID.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getSourceUUID() {
+        return sourceUUID;
+    }
+
+    /**
+     * Imposta il valore della proprietà sourceUUID.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setSourceUUID(String value) {
+        this.sourceUUID = value;
+    }
+
+    /**
+     * Recupera il valore della proprietà cacheConnection.
+     * 
+     * @return
+     *     possible object is
+     *     {@link ScimServiceSettings.CacheConnection }
+     *     
+     */
+    public ScimServiceSettings.CacheConnection getCacheConnection() {
+        return cacheConnection;
+    }
+
+    /**
+     * Imposta il valore della proprietà cacheConnection.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link ScimServiceSettings.CacheConnection }
+     *     
+     */
+    public void setCacheConnection(ScimServiceSettings.CacheConnection value) {
+        this.cacheConnection = value;
     }
 
     /**
@@ -288,6 +381,78 @@ public class ScimServiceSettings
      */
     public void setWritableAttributes(ValuesType value) {
         this.writableAttributes = value;
+    }
+
+
+    /**
+     * <p>Classe Java per anonymous complex type.
+     * 
+     * <p>Il seguente frammento di schema specifica il contenuto previsto contenuto in questa classe.
+     * 
+     * <pre>
+     * &lt;complexType>
+     *   &lt;complexContent>
+     *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+     *       &lt;attribute name="reference" use="required" type="{http://www.w3.org/2001/XMLSchema}IDREF" />
+     *       &lt;attribute name="writeEnabled" use="required" type="{http://www.w3.org/2001/XMLSchema}boolean" />
+     *     &lt;/restriction>
+     *   &lt;/complexContent>
+     * &lt;/complexType>
+     * </pre>
+     * 
+     * 
+     */
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @XmlType(name = "")
+    public static class CacheConnection {
+
+        @XmlAttribute(name = "reference", required = true)
+        @XmlIDREF
+        @XmlSchemaType(name = "IDREF")
+        protected Object reference;
+        @XmlAttribute(name = "writeEnabled", required = true)
+        protected boolean writeEnabled;
+
+        /**
+         * Recupera il valore della proprietà reference.
+         * 
+         * @return
+         *     possible object is
+         *     {@link Object }
+         *     
+         */
+        public Object getReference() {
+            return reference;
+        }
+
+        /**
+         * Imposta il valore della proprietà reference.
+         * 
+         * @param value
+         *     allowed object is
+         *     {@link Object }
+         *     
+         */
+        public void setReference(Object value) {
+            this.reference = value;
+        }
+
+        /**
+         * Recupera il valore della proprietà writeEnabled.
+         * 
+         */
+        public boolean isWriteEnabled() {
+            return writeEnabled;
+        }
+
+        /**
+         * Imposta il valore della proprietà writeEnabled.
+         * 
+         */
+        public void setWriteEnabled(boolean value) {
+            this.writeEnabled = value;
+        }
+
     }
 
 }
