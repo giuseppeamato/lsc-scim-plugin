@@ -6,6 +6,18 @@
 
 	<xsd:import namespace="http://lsc-project.org/XSD/lsc-core-2.2.xsd" schemaLocation="lsc-core-2.2.xsd" />
 
+	<xsd:element name="oauth2ConnectionSettings">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="tokenURL" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="token" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="scope" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="clientId" type="xsd:string" minOccurs="0" maxOccurs="1" />
+				<xsd:element name="clientSecret" type="xsd:string" minOccurs="0" maxOccurs="1" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
 	<xsd:complexType name="schemasType">
 		<xsd:sequence>
 			<xsd:element name="namespace" type="namespaceType" minOccurs="0" maxOccurs="unbounded" />
@@ -26,6 +38,14 @@
 					<xsd:sequence>
 						<xsd:element name="entity" type="xsd:string" minOccurs="1" />
 						<xsd:element name="pivot" type="xsd:string" minOccurs="0" />
+						<xsd:element name="sourcePivot" type="xsd:string" minOccurs="0" />
+						<xsd:element name="sourceUUID" type="xsd:string" minOccurs="0" />
+						<xsd:element name="cacheConnection" minOccurs="0">
+							<xsd:complexType>
+								<xsd:attribute name="reference" type="xsd:IDREF" use="required" />
+								<xsd:attribute name="writeEnabled" type="xsd:boolean" use="required" />
+							</xsd:complexType>
+						</xsd:element>
 						<xsd:element name="domain" type="xsd:string" minOccurs="0" />
 						<xsd:element name="pageSize" type="xsd:int" minOccurs="0" />
 						<xsd:element name="filter" type="xsd:string" minOccurs="0" />
