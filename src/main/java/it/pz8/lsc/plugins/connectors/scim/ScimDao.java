@@ -12,17 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.StreamSupport;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -30,29 +27,29 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.lsc.LscDatasetModification;
 import org.lsc.LscDatasets;
 import org.lsc.LscModifications;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.PluginConnectionType;
+import org.lsc.exception.LscServiceConfigurationException;
 import org.lsc.exception.LscServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.wnameless.json.flattener.FlattenMode;
 import com.github.wnameless.json.flattener.JsonFlattener;
 import com.github.wnameless.json.unflattener.JsonUnflattener;
 
 import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.bean.ScimPatchResource;
 import it.pz8.lsc.plugins.connectors.scim.bean.ScimPathOperation;
-import it.pz8.lsc.plugins.connectors.scim.bean.ValueType;
+import it.pz8.lsc.plugins.connectors.scim.bean.ValueTypeStruct;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
-import it.pz8.lsc.plugins.connectors.scim.rs.BasicAuthenticator;
-import it.pz8.lsc.plugins.connectors.scim.rs.ClientBuilderCustomizer;
+import it.pz8.lsc.plugins.connectors.scim.rs.AuthClientBuilder;
 
 /**
  * @author Giuseppe Amato
@@ -73,13 +70,12 @@ public class ScimDao {
     public static final String EQ_OPERATOR = " eq ";
     private static final String HTTP_STATUS_TPL_MSG = "status: %d, message: %s";
     private static final int PAGESIZE_DEFAULT_VALUE = 0;
-    private static final Pattern MULTIVALUE_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
+    private static final Pattern MULTIVALUE_PATTERN = Pattern.compile("\\[([^\\[\\]]+)\\]");
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
-    private static final List<ClientBuilderCustomizer> CLIENT_CUSTOMIZERS = 
-    		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false).toList();
-    
-    private final String entity;    
+
+    private final String entity;
+    private final Optional<String> sourcePivot;
     private final Optional<String> pivot;
     private final Optional<String> domain;
     private final Optional<Integer> pageSize;
@@ -87,14 +83,17 @@ public class ScimDao {
     private final Optional<String> attributes;
     private final Optional<String> excludedAttributes;
     private final List<NamespaceType> namespaces;
+    private final List<String> writableAttributes;
+    private final ScimUUIDMappingCache cache;
     
     private WebTarget target; 
     private ObjectMapper mapper;
 
-    public ScimDao(PluginConnectionType connection, ScimServiceSettings settings) {
+    public ScimDao(PluginConnectionType connection, ScimServiceSettings settings) throws LscServiceConfigurationException {
         LOGGER.debug("Init service");
         mapper = new ObjectMapper();
         this.entity = settings.getEntity();
+        this.sourcePivot = getStringParameter(settings.getSourcePivot());
         this.pivot = getStringParameter(settings.getPivot());
         this.domain = getStringParameter(settings.getDomain());
         this.namespaces = settings.getSchema()!=null?settings.getSchema().getNamespace():new ArrayList<>();
@@ -102,13 +101,11 @@ public class ScimDao {
         this.attributes = getStringParameter(settings.getAttributes()).map(this::replaceAllAliases);
         this.excludedAttributes = getStringParameter(settings.getExcludedAttributes()).map(this::replaceAllAliases);
         this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
+        this.writableAttributes = Optional.ofNullable(settings.getWritableAttributes()).map(attr -> attr.getString()).orElse(null);
+        
+        cache = new ScimUUIDMappingCache(settings);
 
-        ClientBuilder clientBuilder = ClientBuilder.newBuilder()
-                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
-                .register(new BasicAuthenticator(connection.getUsername(), connection.getPassword()));
-        CLIENT_CUSTOMIZERS.forEach(c -> c.customize(clientBuilder));
-
-        Client client = clientBuilder.build();
+        Client client = AuthClientBuilder.build(connection);
         target = client.target(connection.getUrl());
     }
 
@@ -120,6 +117,10 @@ public class ScimDao {
         return getList(filter);
     }
 
+    public String getSourcePivotName() {
+        return sourcePivot.map(p -> p).orElse(getPivotName());
+    }
+    
     public String getPivotName() {
         return pivot.map(p -> p).orElse(ID);
     }
@@ -219,7 +220,7 @@ public class ScimDao {
         }
     }
     
-    public Map<String, Object> getDetailsByPivot(String pivotValue) throws LscServiceException {
+    public Map<String, Object> getDetailsByPivot(String pivotValue, String sourceUUIDValue) throws LscServiceException {
         Response response = null;
         Map<String, Object> detail = null;
         try {
@@ -233,7 +234,7 @@ public class ScimDao {
             }
             LOGGER.debug("Retrieve {} detail from: {} ", getEntityName(), currentTarget.getUri());
             response = currentTarget.request().accept(MediaType.APPLICATION_JSON).get(Response.class);
-            if (!checkResponse(response)) {              
+            if (!checkResponse(response)) {
                 String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
                 LOGGER.error(errorMessage);
                 throw new ProcessingException(errorMessage);
@@ -247,11 +248,13 @@ public class ScimDao {
                     throw new NotFoundException(String.format("%s %s cannot be found by pivot", getEntityName(), pivotValue));
                 case 1:
                     detail = flatten(mapper.writeValueAsString(resourcesMap.get(0)));
+                    if (cache.isWriteEnabled()) cache.saveMapping(pivotValue, sourceUUIDValue, detail.get(ID).toString(), entity);
                     break;
                 default:
                     throw new LscServiceException(String.format("Multiple results for %s %s", getEntityName(), pivotValue));
                 }
             } else {
+            	if (cache.isWriteEnabled()) cache.saveSourceUUID(pivotValue, sourceUUIDValue, entity);
                 throw new NotFoundException(String.format("%s %s no results found", getEntityName(), pivotValue));
             }
             LOGGER.debug("Details :\n{}", detail);
@@ -276,17 +279,20 @@ public class ScimDao {
             WebTarget currentTarget = target.path(entity);
             LOGGER.debug("Create {} in: {} \n[{}]", getEntityName(), currentTarget.getUri(), lm);
             Map<String, Object> entityattributes = new HashMap<>();
-            List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             entityattributes.put(SCHEMAS, new ArrayList<String>());
+            List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
             for (LscDatasetModification attributeModification : diffs) {
                 if (isMultivaluedAttribute(attributeModification.getAttributeName())) {
                     String attrName = getMultivaluedAttributeName(attributeModification.getAttributeName());
                     String attrIdx = getMultivaluedAttributeIndex(attributeModification.getAttributeName());
-                    List<Object> multivalues =  (List<Object>)Optional.ofNullable(entityattributes.get(attrName)).orElse(new ArrayList<Object>());
+                    List<Object> multivalues = (List<Object>)Optional.ofNullable(entityattributes.get(attrName)).orElse(new ArrayList<Object>());
                     if (StringUtils.isBlank(attrIdx)) {
-                        multivalues.addAll(attributeModification.getValues());
+						for (Object modValue : attributeModification.getValues()) {
+							modValue = (isJson(modValue))?mapper.readValue(modValue.toString(), Object.class):modValue;
+							multivalues.add(modValue);
+						}
                     } else {
-                        multivalues.add(new ValueType(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(attributeModification.getValues())));
+                        multivalues.add(new ValueTypeStruct(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(attributeModification.getValues())));
                     }
                     entityattributes.put(attrName, multivalues);
                 } else {
@@ -301,6 +307,11 @@ public class ScimDao {
             	String body = response.hasEntity() ? response.readEntity(String.class) : "<empty>";
                 LOGGER.error("Error {} ({}) while creating {}\r\n{}",  response.getStatus(), response.getStatusInfo(), getEntityName(), body);
             } else {
+            	if (cache.isWriteEnabled()) {
+                	Map<String, Object> results = mapper.readValue(response.readEntity(String.class), LinkedHashMap.class);
+            		cache.updateScimId(lm.getMainIdentifier(), results.get(ID).toString(), entity);
+            	}
+				LOGGER.debug("SCIM response: \n{}", response);
                 result = true;
             }
         } catch (Exception e) {
@@ -340,7 +351,7 @@ public class ScimDao {
                     break;
                 }
                 if (operation!=null) {
-                    ScimPathOperation op = createOperation(operation, diff, lm);
+                    ScimPathOperation op = buildPatchOperation(operation, diff, lm);
                     patchOp.addOperations(op);
                 }
             }
@@ -349,7 +360,9 @@ public class ScimDao {
                 LOGGER.debug("SCIM payload: {}", patchOpJson);
                 response = currentTarget.request(MediaType.APPLICATION_JSON_TYPE).method(HttpMethod.PATCH, Entity.entity(patchOpJson, MediaType.APPLICATION_JSON));
                 if (!checkResponse(response)) {
-                    LOGGER.error("Error {} ({}) while creating {} {}",  response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier());
+                	response.bufferEntity();
+                	String body = response.hasEntity() ? response.readEntity(String.class) : "<empty>";
+                    LOGGER.error("Error {} ({}) while updating {} {}\r\n{}",  response.getStatus(), response.getStatusInfo(), getEntityName(), lm.getMainIdentifier(), body);
                 } else {
                     result = true;
                 }
@@ -365,15 +378,14 @@ public class ScimDao {
         return result;
     }
 
-    private ScimPathOperation createOperation(String operation, LscDatasetModification diff, LscModifications lm) {
+    private ScimPathOperation buildPatchOperation(String operation, LscDatasetModification diff, LscModifications lm) {
         String path = replaceAlias(diff.getAttributeName());
         Serializable value = getFirstValueAsString(diff.getValues());
         if (isMultivaluedAttribute(diff.getAttributeName()) && !diff.getOperation().equals(DELETE_VALUES)) {
-            path = getMultivaluedAttributeName(diff.getAttributeName());
+            path = replaceAlias(getMultivaluedAttributeName(diff.getAttributeName()));
             String attrIdx = getMultivaluedAttributeIndex(diff.getAttributeName());
             if (StringUtils.isBlank(attrIdx)) {
-                // Simple multivalue
-                value = stringValuesToJsonValues(diff.getValues());
+           		value = stringValuesToJsonValues(diff.getValues());
             } else {
                 // Multivalue with path
                 if (hasValue(lm.getDestinationBean(), diff.getAttributeName())) {
@@ -381,8 +393,9 @@ public class ScimDao {
                     value = getFirstValueAsString(diff.getValues());
                     operation = OperationType.REPLACE.getName();
                 } else {
+                	path = getMultivaluedAttributeName(diff.getAttributeName());
                     value = new ArrayList<Serializable>();
-                    ((List<Serializable>)value).add(new ValueType(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));
+                    ((List<Serializable>)value).add(new ValueTypeStruct(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));                	
                     operation = OperationType.ADD.getName();
                 }
             }
@@ -421,7 +434,7 @@ public class ScimDao {
     
     private String buildPivotFilter(String pivotValue) {
         StringBuilder pivotFilter = new StringBuilder();
-        pivotFilter.append(getPivotName()).append(EQ_OPERATOR).append(pivotValue.replace("'", "''"));
+        pivotFilter.append(getPivotName()).append(EQ_OPERATOR).append(StringUtils.wrap(pivotValue.replace("'", "''"), '"'));
         return filter.map(f -> f + " and " + pivotFilter.toString()).orElse(pivotFilter.toString());
     }
     
@@ -444,7 +457,7 @@ public class ScimDao {
     private boolean isMultivaluedAttribute(String attributeName) {
         return StringUtils.contains(attributeName, "[");
     }
-    
+
     /**
      * Returns the attribute name without square brackets  
      */
@@ -470,7 +483,8 @@ public class ScimDao {
         for (NamespaceType namespace : namespaces) {
             jsonAttrsWithSchemaAlias = StringUtils.replace(jsonAttrsWithSchemaAlias, namespace.getUri(), namespace.getAlias());    
         }
-        Map<String, Object> flattenDiffs = JsonFlattener.flattenAsMap(jsonAttrsWithSchemaAlias);
+        JsonFlattener flattener = new JsonFlattener(jsonAttrsWithSchemaAlias).withFlattenMode(FlattenMode.KEEP_PRIMITIVE_ARRAYS);
+        Map<String, Object> flattenDiffs = flattener.flattenAsMap();
         return processFlatDiffs(flattenDiffs);
     }
     
@@ -478,26 +492,51 @@ public class ScimDao {
      * Processes the flat map to obtain a single entry per type for each multivalued attribute
      */
     private Map<String, Object> processFlatDiffs(Map<String, Object> flattenDiffs) {
-        List<String> types = flattenDiffs.keySet().stream()
+    	Map<String, Object> normalizedFlattenDiffs = (writableAttributes!=null)?normalizeArrayKeys(flattenDiffs):flattenDiffs;
+        List<String> types = normalizedFlattenDiffs.keySet().stream()
                 .filter(key -> ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "].")) || key.endsWith("]") )
                 .toList();
-        for (String key : types) {
-            if (key.endsWith("]")) {
-                String newKey = getMultivaluedAttributeName(key)+"[]";
-                flattenDiffs.put(newKey, flattenDiffs.get(key));
-                flattenDiffs.remove(key);
+        for (String key : types) {       	
+			if (key.endsWith("]")) {
+        		String newKey = getMultivaluedAttributeName(key)+"[]";
+				if (!key.equals(newKey)) {
+					normalizedFlattenDiffs.put(newKey, normalizedFlattenDiffs.get(key));
+					normalizedFlattenDiffs.remove(key);
+				}
             } else {
-                String type = (String)flattenDiffs.get(key);
-                String selector = StringUtils.substringAfter(key, "].");
-                String attrIndex = getMultivaluedAttributeIndex(key);
-                String newKey = String.format("%s[%s%s%s]", getMultivaluedAttributeName(key), selector, EQ_OPERATOR, type);
-                String valueKey = String.format("%s[%s].%s", getMultivaluedAttributeName(key), attrIndex, VALUE_ATTRIBUTE);
-                flattenDiffs.put(newKey, flattenDiffs.get(valueKey));
-                flattenDiffs.remove(key);
-                flattenDiffs.remove(valueKey);
+            	if (ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "]."))) {
+	                String type = (String)normalizedFlattenDiffs.get(key);
+	                String selector = StringUtils.substringAfter(key, "].");
+	                String attrIndex = getMultivaluedAttributeIndex(key);
+	                String newKey = String.format("%s[%s%s%s]", getMultivaluedAttributeName(key), selector, EQ_OPERATOR, type);
+	                String valueKey = String.format("%s[%s].%s", getMultivaluedAttributeName(key), attrIndex, VALUE_ATTRIBUTE);
+	                if (!key.equals(newKey)) {
+		                normalizedFlattenDiffs.put(newKey, normalizedFlattenDiffs.get(valueKey));
+		                normalizedFlattenDiffs.remove(key);
+		                normalizedFlattenDiffs.remove(valueKey);	                	
+	                }
+            	}
             }
         }
-        return flattenDiffs;
+        return normalizedFlattenDiffs;
+    }
+    
+    /**
+     * Normalizes the keys of the provided map based on the configured writable attributes
+     * <p>
+     * If an attribute is defined as an array type in {@code writableAttributes} (i.e. its name
+     * appears with the "[]" suffix), the corresponding map entry key is converted to its array
+     * form. Otherwise, the original key is preserved.
+     * </p>
+     */
+    private Map<String, Object> normalizeArrayKeys(Map<String, Object> flattenDiffs) {
+    	Map<String, Object> updatedMap = new HashMap<>();
+    	for (Map.Entry<String, Object> entry: flattenDiffs.entrySet()) {
+    		String arrayKey = entry.getKey()+"[]";
+    		boolean isArray = writableAttributes.contains(arrayKey);
+    		updatedMap.put(isArray?arrayKey:entry.getKey(), entry.getValue());
+		} 	
+    	return updatedMap;
     }
     
     /**
@@ -553,6 +592,18 @@ public class ScimDao {
             }
         }
         return jsonValues;
+    }
+
+    private boolean isJson(Object raw) {
+        try {
+			if (raw instanceof String) {
+        		return mapper.readTree((String)raw) != null;
+    		} else {
+    			return false;
+    		}
+    	} catch (Exception e) { 
+    		return false; 
+    	}
     }
 
 }

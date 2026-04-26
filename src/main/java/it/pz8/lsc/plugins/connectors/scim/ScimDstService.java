@@ -46,7 +46,7 @@ public class ScimDstService implements IWritableService {
     public ScimDstService(final TaskType task) throws LscServiceConfigurationException {
         try {
             if (task.getPluginDestinationService().getAny() == null || task.getPluginDestinationService().getAny().size() != 1 || !(task.getPluginDestinationService().getAny().get(0) instanceof ScimServiceSettings)) {
-                throw new LscServiceConfigurationException("Unable to identify the scim service configuration inside the plugin source node of the task: " + task.getName());
+                throw new LscServiceConfigurationException("Unable to identify the scim service configuration inside the plugin destination node of the task: " + task.getName());
             }
             settings = (ScimServiceSettings) task.getPluginDestinationService().getAny().get(0);
             if (StringUtils.isBlank(settings.getEntity()) || (!settings.getEntity().equals(USERS) && !settings.getEntity().equals(GROUPS))) {
@@ -55,6 +55,9 @@ public class ScimDstService implements IWritableService {
             PluginConnectionType pluginConnectionType = (PluginConnectionType) task.getPluginDestinationService().getConnection().getReference();
             if (pluginConnectionType == null) {
                 throw new LscServiceConfigurationException("Unable to identify the scim connection settings inside the connection node of the task: " + task.getName());
+            }
+            if (settings.getCacheConnection()!=null && settings.getCacheConnection().getReference()!=null && settings.getCacheConnection().isWriteEnabled() && StringUtils.isBlank(settings.getSourceUUID())) {
+           		throw new LscServiceConfigurationException("Unable to identify the source UUID attribute, it is mandatory when mapping cache is enabled inside the plugin destination node of the task: " + task.getName());	
             }
             beanClass = (Class<IBean>) Class.forName(task.getBean());
             dao = new ScimDao(pluginConnectionType, settings);
@@ -74,13 +77,14 @@ public class ScimDstService implements IWritableService {
     }
 
     @Override
-    public IBean getBean(String pivotValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
-    	LOGGER.debug("Call to getBean({}, {}, {})", pivotValue, lscDatasets, fromSameService);
-        String pivotName = dao.getPivotName();
+    public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
+    	LOGGER.debug("Call to getBean({}, {}, {})", pivotRawValue, lscDatasets, fromSameService);
+        String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
+        String sourceUUIDValue = (settings.getSourceUUID()==null) ? null : lscDatasets.getStringValueAttribute(settings.getSourceUUID());
         try {
-            Map<String, Object> entity = dao.getDetailsByPivot(pivotValue);
+            Map<String, Object> entity = dao.getDetailsByPivot(pivotValue, sourceUUIDValue);
             IBean bean = beanClass.getDeclaredConstructor().newInstance();
-            bean.setMainIdentifier(entity.get(pivotName).toString());
+            bean.setMainIdentifier(pivotValue);        
             LscDatasets datasets = new LscDatasets();
             entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null ? new LinkedHashSet<>() : entry.getValue()));
             bean.setDatasets(datasets);
