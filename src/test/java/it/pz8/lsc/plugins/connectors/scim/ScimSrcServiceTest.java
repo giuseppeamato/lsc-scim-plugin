@@ -45,7 +45,7 @@ class ScimSrcServiceTest {
     protected static final Logger LOGGER = LoggerFactory.getLogger(ScimSrcServiceTest.class);
     
     private static final int EXPOSED_PORT = 9443;
-    private static final String IMAGE_NAME = "wso2/wso2is:5.10.0-alpine3.11";
+    private static final String IMAGE_NAME = "wso2/wso2is:7.2.0-alpine";
     private static final int TIMEOUT = 300;
     private static final String BASEPATH = "https://localhost:%d/scim2";
     private static final String USERNAME = "admin";
@@ -208,31 +208,31 @@ class ScimSrcServiceTest {
 
     @Test
     @Order(9)
-    void getBeanShouldReturnMainIdentifierSetToIdWhenMailAsPivot() throws Exception {
+    void getBeanShouldReturnMainIdentifierSetToIdWhenUsernameAsPivot() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
-        when(serviceSettings.getPivot()).thenReturn("emails");
+        when(serviceSettings.getPivot()).thenReturn("userName");
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
         Map<String, LscDatasets> pivots = testSrcService.getListPivots();
         String firstUserPivotValue = pivots.keySet().stream().findFirst().get();
-        IBean bean = testSrcService.getBean("emails", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
+        IBean bean = testSrcService.getBean("userName", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
         assertThat(bean.getMainIdentifier()).isEqualTo(pivots.get(firstUserPivotValue).getStringValueAttribute("id"));
     }
     
     @Test
     @Order(10)
-    void getBeanShouldReturnIdAndMailWhenMailAsPivot() throws Exception {
+    void getBeanShouldReturnIdAndUsernameWhenUsernameAsPivot() throws Exception {
         when(serviceSettings.getFilter()).thenReturn("");
-        when(serviceSettings.getPivot()).thenReturn("emails");
+        when(serviceSettings.getPivot()).thenReturn("userName");
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
         Map<String, LscDatasets> pivots = testSrcService.getListPivots();
         String firstUserPivotValue = pivots.keySet().stream().findFirst().get();
-        IBean bean = testSrcService.getBean("emails", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
+        IBean bean = testSrcService.getBean("userName", pivots.get(firstUserPivotValue), FROM_SAME_SERVICE);
         assertThat(bean.getDatasetFirstValueById("id")).isEqualTo(pivots.get(firstUserPivotValue).getStringValueAttribute("id"));
-        assertThat(bean.getDatasetFirstValueById("emails[]")).isEqualTo(pivots.get(firstUserPivotValue).getStringValueAttribute("emails"));
+        assertThat(bean.getDatasetFirstValueById("userName")).isEqualTo(pivots.get(firstUserPivotValue).getStringValueAttribute("userName"));
     }
     
     @Test
@@ -243,7 +243,7 @@ class ScimSrcServiceTest {
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         ScimSrcService testSrcService = new ScimSrcService(task);
-        LscDatasets nonExistingIdDataset = new LscDatasets(ImmutableMap.of("userName", "pippo"));
+        LscDatasets nonExistingIdDataset = new LscDatasets(ImmutableMap.of("userName", "pluto"));
         IBean bean = testSrcService.getBean("userName", nonExistingIdDataset, !FROM_SAME_SERVICE);
         assertThat(bean).isNull();
     }    
@@ -266,7 +266,7 @@ class ScimSrcServiceTest {
     @Test
     @Order(13)
     void listPivotShouldReturnEmptyWhenNoResultByFilter() throws Exception {
-        when(serviceSettings.getFilter()).thenReturn("userName co pippo");
+        when(serviceSettings.getFilter()).thenReturn("userName co pluto");
         when(serviceSettings.getPivot()).thenReturn(null);
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
