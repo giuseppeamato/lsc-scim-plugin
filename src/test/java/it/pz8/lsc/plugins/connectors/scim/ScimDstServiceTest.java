@@ -57,7 +57,7 @@ class ScimDstServiceTest {
     private static final int EXPOSED_PORT = 9443;  
     private static final String IMAGE_NAME = "wso2/wso2is:7.2.0-alpine";
     private static final int TIMEOUT = 300;
-    private static final String BASEPATH = "https://192.168.1.141:%d/scim2";
+    private static final String BASEPATH = "https://localhost:%d/scim2";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "admin";
 
