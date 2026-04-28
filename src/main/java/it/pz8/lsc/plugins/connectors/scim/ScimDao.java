@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wnameless.json.flattener.FlattenMode;
 import com.github.wnameless.json.flattener.JsonFlattener;
@@ -322,8 +321,8 @@ public class ScimDao {
         return result;
     }
     
-    private List<Object> addToMultivalueAttribute(List<Object> entityattribute, String attrIdx, List<Object> values) throws JsonMappingException, JsonProcessingException {
-        List<Object> multivalues = (List<Object>)Optional.ofNullable(entityattribute).orElse(new ArrayList<Object>());
+    private List<Object> addToMultivalueAttribute(List<Object> entityattribute, String attrIdx, List<Object> values) throws JsonProcessingException {
+        List<Object> multivalues = Optional.ofNullable(entityattribute).orElse(new ArrayList<>());
         if (StringUtils.isBlank(attrIdx)) {
 			for (Object modValue : values) {
 				modValue = (isJson(modValue))?mapper.readValue(modValue.toString(), Object.class):modValue;
