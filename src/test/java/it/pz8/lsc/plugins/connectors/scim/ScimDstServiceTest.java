@@ -394,6 +394,7 @@ class ScimDstServiceTest {
     	when(serviceSettings.getEntity()).thenReturn("Users");
     	when(serviceSettings.getPivot()).thenReturn("userName");
     	when(serviceSettings.getSourcePivot()).thenReturn("uid");
+    	when(serviceSettings.getSourceUUID()).thenReturn("uid");
     	testDstService = new ScimDstService(task);
     	LscDatasets lscUserDatasets = new LscDatasets();
     	lscUserDatasets.put("uid", "admin");
