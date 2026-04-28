@@ -123,10 +123,10 @@ public class ScimUUIDMappingCache {
     
     private void logError(SQLException e) {
         LOGGER.error("""
-        		Error executing SQL command.
-        		Message: {}
-        		SQLState: {}
-        		Error Code: {}
-        		""", e.getMessage(), e.getSQLState(), e.getErrorCode(), e);
+				Error executing SQL command.
+				Message: {}
+				SQLState: {}
+				Error Code: {}
+				""", e.getMessage(), e.getSQLState(), e.getErrorCode(), e);
     }
 }

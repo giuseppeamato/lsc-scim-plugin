@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wnameless.json.flattener.FlattenMode;
 import com.github.wnameless.json.flattener.JsonFlattener;
@@ -288,15 +289,8 @@ public class ScimDao {
                 if (isMultivaluedAttribute(attributeModification.getAttributeName())) {
                     String attrName = getMultivaluedAttributeName(attributeModification.getAttributeName());
                     String attrIdx = getMultivaluedAttributeIndex(attributeModification.getAttributeName());
-                    List<Object> multivalues = (List<Object>)Optional.ofNullable(entityattributes.get(attrName)).orElse(new ArrayList<Object>());
-                    if (StringUtils.isBlank(attrIdx)) {
-						for (Object modValue : attributeModification.getValues()) {
-							modValue = (isJson(modValue))?mapper.readValue(modValue.toString(), Object.class):modValue;
-							multivalues.add(modValue);
-						}
-                    } else {
-                        multivalues.add(new ValueTypeStruct(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(attributeModification.getValues())));
-                    }
+                    List<Object> entityattribute = (List<Object>)entityattributes.get(attrName);
+                    List<Object> multivalues = addToMultivalueAttribute(entityattribute, attrIdx, attributeModification.getValues());
                     entityattributes.put(attrName, multivalues);
                 } else {
                     entityattributes.put(attributeModification.getAttributeName(), getFirstValueAsString(attributeModification.getValues()));
@@ -327,7 +321,20 @@ public class ScimDao {
         }
         return result;
     }
-
+    
+    private List<Object> addToMultivalueAttribute(List<Object> entityattribute, String attrIdx, List<Object> values) throws JsonMappingException, JsonProcessingException {
+        List<Object> multivalues = (List<Object>)Optional.ofNullable(entityattribute).orElse(new ArrayList<Object>());
+        if (StringUtils.isBlank(attrIdx)) {
+			for (Object modValue : values) {
+				modValue = (isJson(modValue))?mapper.readValue(modValue.toString(), Object.class):modValue;
+				multivalues.add(modValue);
+			}
+        } else {
+            multivalues.add(new ValueTypeStruct(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(values)));
+        }
+        return multivalues;
+    }
+    
     public boolean update(LscModifications lm) throws LscServiceException {
         Response response = null;
         boolean result = false;
