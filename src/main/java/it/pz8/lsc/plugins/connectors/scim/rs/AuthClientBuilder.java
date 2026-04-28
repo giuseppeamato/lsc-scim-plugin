@@ -27,9 +27,12 @@ public class AuthClientBuilder {
     private static final List<ClientBuilderCustomizer> CLIENT_CUSTOMIZERS = 
     		StreamSupport.stream(ServiceLoader.load(ClientBuilderCustomizer.class).spliterator(), false).toList();
     
+    private AuthClientBuilder() {
+    }
+    
     public static Client build(PluginConnectionType connection) throws LscServiceConfigurationException {
     	ClientBuilder clientBuilder = ClientBuilder.newBuilder().property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true);
-        if (connection.getAny()!=null && connection.getAny().size()>0) {
+        if (connection.getAny()!=null && connection.getAny().isEmpty()) {
         	Oauth2ConnectionSettings config = (Oauth2ConnectionSettings)connection.getAny().get(0);
 			try {
 				clientBuilder.register(new Oauth2Authenticator(TokenProviderFactory.from(config))); 

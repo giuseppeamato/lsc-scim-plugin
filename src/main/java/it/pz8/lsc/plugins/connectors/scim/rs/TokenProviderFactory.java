@@ -11,6 +11,9 @@ import it.pz8.lsc.plugins.connectors.scim.generated.Oauth2ConnectionSettings;
  */
 public class TokenProviderFactory {
 
+	private TokenProviderFactory() {
+	}
+	
 	public static TokenProvider from(Oauth2ConnectionSettings config) throws URISyntaxException {
 	    if (config.getToken() != null && !config.getToken().isEmpty()) {
 	        return new Oauth2StaticTokenProvider(config.getToken());

@@ -32,6 +32,7 @@ import org.lsc.LscDatasets;
 import org.lsc.LscModifications;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.PluginConnectionType;
+import org.lsc.configuration.ValuesType;
 import org.lsc.exception.LscServiceConfigurationException;
 import org.lsc.exception.LscServiceException;
 import org.slf4j.Logger;
@@ -101,7 +102,7 @@ public class ScimDao {
         this.attributes = getStringParameter(settings.getAttributes()).map(this::replaceAllAliases);
         this.excludedAttributes = getStringParameter(settings.getExcludedAttributes()).map(this::replaceAllAliases);
         this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
-        this.writableAttributes = Optional.ofNullable(settings.getWritableAttributes()).map(attr -> attr.getString()).orElse(null);
+        this.writableAttributes = Optional.ofNullable(settings.getWritableAttributes()).map(ValuesType::getString).orElse(null);
         
         cache = new ScimUUIDMappingCache(settings);
 
@@ -254,7 +255,9 @@ public class ScimDao {
                     throw new LscServiceException(String.format("Multiple results for %s %s", getEntityName(), pivotValue));
                 }
             } else {
-            	if (cache.isWriteEnabled()) cache.saveSourceUUID(pivotValue, sourceUUIDValue, entity);
+            	if (cache.isWriteEnabled()) {
+            		cache.saveSourceUUID(pivotValue, sourceUUIDValue, entity);
+            	}
                 throw new NotFoundException(String.format("%s %s no results found", getEntityName(), pivotValue));
             }
             LOGGER.debug("Details :\n{}", detail);
@@ -496,27 +499,24 @@ public class ScimDao {
         List<String> types = normalizedFlattenDiffs.keySet().stream()
                 .filter(key -> ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "].")) || key.endsWith("]") )
                 .toList();
-        for (String key : types) {       	
-			if (key.endsWith("]")) {
-        		String newKey = getMultivaluedAttributeName(key)+"[]";
-				if (!key.equals(newKey)) {
-					normalizedFlattenDiffs.put(newKey, normalizedFlattenDiffs.get(key));
-					normalizedFlattenDiffs.remove(key);
-				}
-            } else {
-            	if (ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "]."))) {
-	                String type = (String)normalizedFlattenDiffs.get(key);
-	                String selector = StringUtils.substringAfter(key, "].");
-	                String attrIndex = getMultivaluedAttributeIndex(key);
-	                String newKey = String.format("%s[%s%s%s]", getMultivaluedAttributeName(key), selector, EQ_OPERATOR, type);
-	                String valueKey = String.format("%s[%s].%s", getMultivaluedAttributeName(key), attrIndex, VALUE_ATTRIBUTE);
-	                if (!key.equals(newKey)) {
-		                normalizedFlattenDiffs.put(newKey, normalizedFlattenDiffs.get(valueKey));
-		                normalizedFlattenDiffs.remove(key);
-		                normalizedFlattenDiffs.remove(valueKey);	                	
-	                }
-            	}
+        for (String key : types) {
+			String newKey = getMultivaluedAttributeName(key)+"[]";
+			if (key.endsWith("]") && !key.equals(newKey)) {
+				normalizedFlattenDiffs.put(getMultivaluedAttributeName(key)+"[]", normalizedFlattenDiffs.get(key));
+				normalizedFlattenDiffs.remove(key);
             }
+        	if (ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "]."))) {
+                String type = (String)normalizedFlattenDiffs.get(key);
+                String selector = StringUtils.substringAfter(key, "].");
+                String attrIndex = getMultivaluedAttributeIndex(key);
+                newKey = String.format("%s[%s%s%s]", getMultivaluedAttributeName(key), selector, EQ_OPERATOR, type);
+                String valueKey = String.format("%s[%s].%s", getMultivaluedAttributeName(key), attrIndex, VALUE_ATTRIBUTE);
+                if (!key.equals(newKey)) {
+	                normalizedFlattenDiffs.put(newKey, normalizedFlattenDiffs.get(valueKey));
+	                normalizedFlattenDiffs.remove(key);
+	                normalizedFlattenDiffs.remove(valueKey);	                	
+                }
+        	}
         }
         return normalizedFlattenDiffs;
     }
@@ -596,8 +596,8 @@ public class ScimDao {
 
     private boolean isJson(Object raw) {
         try {
-			if (raw instanceof String) {
-        		return mapper.readTree((String)raw) != null;
+			if (raw instanceof String stringObj) {
+        		return mapper.readTree(stringObj) != null;
     		} else {
     			return false;
     		}

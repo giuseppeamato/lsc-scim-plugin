@@ -1,7 +1,7 @@
 package it.pz8.lsc.plugins.connectors.scim.rs;
 
+import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ public class Oauth2TokenProvider implements TokenProvider {
 	private volatile long tokenObtainedTime = 0;	
     private final ReentrantLock lock = new ReentrantLock();
     
-    public Oauth2TokenProvider(String clientId, String clientSecret, String scope, URI tokenEndpoint) throws URISyntaxException {
+    public Oauth2TokenProvider(String clientId, String clientSecret, String scope, URI tokenEndpoint) {
     	LOGGER.debug("Init Oauth2 Token Provider");
         ClientCredentialsGrant grant = new ClientCredentialsGrant();
         ClientAuthentication clientAuth = new ClientSecretBasic(new ClientID(clientId), new Secret(clientSecret));
@@ -40,7 +40,7 @@ public class Oauth2TokenProvider implements TokenProvider {
     }
     
     @Override
-    public String getToken() throws Exception {
+    public String getToken() throws IOException {
         if (currentToken != null && !isTokenExpired()) {
             return currentToken.getValue();
         }
@@ -63,17 +63,22 @@ public class Oauth2TokenProvider implements TokenProvider {
         return now>=expireAt;
     }
 
-    private void refreshToken() throws Exception {
+    private void refreshToken() throws IOException {
     	LOGGER.debug("Request new token.");
-        TokenResponse response = TokenResponse.parse(request.toHTTPRequest().send());
-        if (response.indicatesSuccess()) {
-        	LOGGER.debug("Token received.");
-        	AccessTokenResponse successResponse = response.toSuccessResponse();
-        	currentToken = successResponse.getTokens().getAccessToken();
-        	tokenObtainedTime = System.currentTimeMillis() / 1000;
-        } else {
-            HTTPResponse errorResponse = response.toHTTPResponse();            
-            LOGGER.error("Error while getting token: {} {}", errorResponse.getStatusCode(), errorResponse.getBody());
-        }
+        TokenResponse response;
+		try {
+			response = TokenResponse.parse(request.toHTTPRequest().send());
+	        if (response.indicatesSuccess()) {
+	        	LOGGER.debug("Token received.");
+	        	AccessTokenResponse successResponse = response.toSuccessResponse();
+	        	currentToken = successResponse.getTokens().getAccessToken();
+	        	tokenObtainedTime = System.currentTimeMillis() / 1000;
+	        } else {
+	            HTTPResponse errorResponse = response.toHTTPResponse();            
+	            LOGGER.error("Error while getting token: {} {}", errorResponse.getStatusCode(), errorResponse.getBody());
+	        }
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
     }
 }

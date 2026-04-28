@@ -65,7 +65,7 @@ public class ScimUUIDMappingCache {
                 )
             """);
         } catch (SQLException e) {
-            throw new RuntimeException("Schema init failed", e);
+            throw new IllegalStateException("Schema init failed", e);
         }
     }
     
@@ -80,7 +80,7 @@ public class ScimUUIDMappingCache {
 		    ps.executeUpdate();
     	} catch (SQLException e) {
     		logError(e);
-    		throw new RuntimeException(e);
+    		throw new IllegalStateException(e);
     	}
     }
     
@@ -98,7 +98,7 @@ public class ScimUUIDMappingCache {
 		    ps.executeUpdate();
     	} catch (SQLException e) {
     		logError(e);
-    		throw new RuntimeException(e);
+    		throw new IllegalStateException(e);
     	}
     }
     
@@ -117,16 +117,16 @@ public class ScimUUIDMappingCache {
 		    return cachedData;
     	} catch (SQLException e) {
     		logError(e);
-    		throw new RuntimeException(e);
+    		throw new IllegalStateException(e);
     	}
     }
     
     private void logError(SQLException e) {
         LOGGER.error("""
-    		Error executing SQL command.
-    		Message: {}
-    		SQLState: {}
-    		Error Code: {}
-		""", e.getMessage(), e.getSQLState(), e.getErrorCode(), e);
+        		Error executing SQL command.
+        		Message: {}
+        		SQLState: {}
+        		Error Code: {}
+        		""", e.getMessage(), e.getSQLState(), e.getErrorCode(), e);
     }
 }
