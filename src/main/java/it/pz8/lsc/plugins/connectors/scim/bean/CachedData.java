@@ -12,7 +12,6 @@ public final class CachedData {
 	private String entity;
 	
 	public CachedData(String pivot, String sourceUUID, String scimId, String entity) {
-		super();
 		this.pivot = pivot;
 		this.sourceUUID = sourceUUID;
 		this.scimId = scimId;

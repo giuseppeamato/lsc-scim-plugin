@@ -27,6 +27,7 @@ import org.lsc.LscModificationType;
 import org.lsc.LscModifications;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.ConnectionType;
+import org.lsc.configuration.DatabaseConnectionType;
 import org.lsc.configuration.PluginConnectionType;
 import org.lsc.configuration.PluginDestinationServiceType;
 import org.lsc.configuration.ServiceType;
@@ -44,6 +45,7 @@ import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
+import it.pz8.lsc.plugins.connectors.scim.utils.ScimUtils;
 
 /**
  * @author Giuseppe Amato
@@ -60,12 +62,17 @@ class ScimDstServiceTest {
     private static final String BASEPATH = "https://localhost:%d/scim2";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "admin";
+    private static final String CACHEDB_PATH = "jdbc:h2:file:./data/scim2mapping";
+    private static final String CACHEDB_USERNAME = "sa";
+    private static final String CACHEDB_PASSWORD = "admin";
+    private static final String CACHEDB_DRIVER = "org.h2.Driver";
 
     private static int mappedPort;
     private static GenericContainer<?> wso2ids;
 
     private static TaskType task;
     private static ScimServiceSettings serviceSettings;
+    private static DatabaseConnectionType dbConnectionType;
     private static PluginConnectionType connectionType;
     private static PluginDestinationServiceType pluginDestinationService;
     private static ScimDstService testDstService;
@@ -89,7 +96,6 @@ class ScimDstServiceTest {
         task = mock(TaskType.class);
         connectionType = mock(PluginConnectionType.class);
         ServiceType.Connection connection = mock(ServiceType.Connection.class);
-
         when(connectionType.getUrl()).thenReturn(String.format(BASEPATH, mappedPort));
         when(connectionType.getUsername()).thenReturn(USERNAME);
         when(connectionType.getPassword()).thenReturn(PASSWORD);
@@ -101,6 +107,17 @@ class ScimDstServiceTest {
         when(serviceSettings.getFilter()).thenReturn(null);
         when(serviceSettings.getPivot()).thenReturn("userName");
         when(serviceSettings.getSourcePivot()).thenReturn("uid");
+
+        dbConnectionType = mock(DatabaseConnectionType.class);
+        ScimServiceSettings.CacheConnection cacheconnection = mock(ScimServiceSettings.CacheConnection.class);
+        when(dbConnectionType.getUrl()).thenReturn(CACHEDB_PATH);
+        when(dbConnectionType.getUsername()).thenReturn(CACHEDB_USERNAME);
+        when(dbConnectionType.getPassword()).thenReturn(CACHEDB_PASSWORD);
+        when(dbConnectionType.getDriver()).thenReturn(CACHEDB_DRIVER);
+        when(cacheconnection.getReference()).thenReturn(dbConnectionType);
+        when(cacheconnection.isWriteEnabled()).thenReturn(true);
+        when(serviceSettings.getCacheConnection()).thenReturn(cacheconnection);
+        
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
         when(task.getBean()).thenReturn("org.lsc.beans.SimpleBean");
@@ -381,7 +398,7 @@ class ScimDstServiceTest {
     	LscDatasets lscUserDatasets = new LscDatasets();
     	lscUserDatasets.put("uid", "admin");
 	    IBean userBean = testDstService.getBean("admin", lscUserDatasets, true);
-	    String uuid = userBean.getDatasetFirstValueById("id");
+	    String scimId = ScimUtils.getCachedDataByPivot(userBean.getMainIdentifier(), "Users").getScimId();
 
     	when(serviceSettings.getEntity()).thenReturn("Groups");
     	when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -389,7 +406,7 @@ class ScimDstServiceTest {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("developer");
-        String adminUser = "{\"display\": \"admin\", \"value\": \""+uuid+"\" }";
+        String adminUser = "{\"display\": \"admin\", \"value\": \""+scimId+"\" }";
         LscDatasetModification members = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "members[]", List.of(adminUser));
         lm.setLscAttributeModifications(List.of(members));
         boolean result = testDstService.apply(lm);
@@ -516,4 +533,5 @@ class ScimDstServiceTest {
     	}
 		assertThat(result).isFalse();
     }
+
 }
