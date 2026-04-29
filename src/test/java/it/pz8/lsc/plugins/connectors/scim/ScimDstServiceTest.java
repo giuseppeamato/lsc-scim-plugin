@@ -117,6 +117,7 @@ class ScimDstServiceTest {
         when(cacheconnection.getReference()).thenReturn(dbConnectionType);
         when(cacheconnection.isWriteEnabled()).thenReturn(true);
         when(serviceSettings.getCacheConnection()).thenReturn(cacheconnection);
+        when(serviceSettings.getSourceUUID()).thenReturn("entryDN");
         
         when(serviceSettings.getAttributes()).thenReturn(null);
         when(serviceSettings.getExcludedAttributes()).thenReturn(null);
