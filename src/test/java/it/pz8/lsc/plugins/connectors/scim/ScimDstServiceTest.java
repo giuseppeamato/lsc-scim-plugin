@@ -41,6 +41,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import it.pz8.lsc.plugins.connectors.scim.bean.CachedData;
 import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.SchemasType;
@@ -102,7 +103,7 @@ class ScimDstServiceTest {
         when(connection.getReference()).thenReturn(connectionType);
         when(pluginDestinationService.getConnection()).thenReturn(connection);
         when(pluginDestinationService.getAny()).thenReturn(List.of(serviceSettings));
-        when(serviceSettings.getEntity()).thenReturn("Users");
+        when(serviceSettings.getEntity()).thenReturn(ScimDao.USERS);
         when(serviceSettings.getSchema()).thenReturn(createScimSchema());
         when(serviceSettings.getFilter()).thenReturn(null);
         when(serviceSettings.getPivot()).thenReturn("userName");
@@ -179,7 +180,8 @@ class ScimDstServiceTest {
         LscDatasetModification firstname = new LscDatasetModification(ADD_VALUES, "name.givenName", List.of("Pippo"));
         LscDatasetModification lastname = new LscDatasetModification(ADD_VALUES, "name.familyName", List.of("Pezzotto"));
         LscDatasetModification email = new LscDatasetModification(ADD_VALUES, "emails[]", List.of("pippo@localhost.com"));
-        lm.setLscAttributeModifications(List.of(username, password, firstname, lastname, email));
+        LscDatasetModification workemail = new LscDatasetModification(ADD_VALUES, "emails[type eq work]", List.of("pippo@acme.com"));
+        lm.setLscAttributeModifications(List.of(username, password, firstname, lastname, email, workemail));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         LscDatasets lscDatasets = new LscDatasets();
@@ -234,12 +236,12 @@ class ScimDstServiceTest {
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
         lm.setDestinationBean(destinationBean);
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[type eq work]", List.of("work@localhost.com"));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[type eq work]", List.of("dev@acme.com"));
         lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("emails[type eq work]")).isEqualTo("work@localhost.com");        
+        assertThat(bean.getDatasetFirstValueById("emails[type eq work]")).isEqualTo("dev@acme.com");        
     }
 
     @Test
@@ -392,15 +394,22 @@ class ScimDstServiceTest {
     @Test
     @Order(18)
     void updateMembership() throws LscServiceException, NamingException {
-    	when(serviceSettings.getEntity()).thenReturn("Users");
+    	when(serviceSettings.getEntity()).thenReturn(ScimDao.USERS);
     	when(serviceSettings.getPivot()).thenReturn("userName");
     	when(serviceSettings.getSourcePivot()).thenReturn("uid");
     	when(serviceSettings.getSourceUUID()).thenReturn("uid");
     	testDstService = new ScimDstService(task);
     	LscDatasets lscUserDatasets = new LscDatasets();
     	lscUserDatasets.put("uid", "admin");
+    	lscUserDatasets.put("entryDN", "uid=admin");
 	    IBean userBean = testDstService.getBean("admin", lscUserDatasets, true);
-	    String scimId = ScimUtils.getCachedDataByPivot(userBean.getMainIdentifier(), "Users").getScimId();
+	    CachedData cachedData = ScimUtils.getCachedDataByPivot(userBean.getMainIdentifier(), ScimDao.USERS);
+	    String scimId = cachedData.getScimId();
+	    String sourceUUID = cachedData.getSourceUUID();
+	    assertThat(cachedData.getPivot()).isEqualTo(userBean.getMainIdentifier());
+	    assertThat(cachedData.getEntity()).isEqualTo(ScimDao.USERS);
+	    CachedData cachedDataByUUID = ScimUtils.getCachedDataByUUID(sourceUUID, ScimDao.USERS);
+	    assertThat(cachedData.getPivot()).isEqualTo(cachedDataByUUID.getPivot());
 
     	when(serviceSettings.getEntity()).thenReturn("Groups");
     	when(serviceSettings.getPivot()).thenReturn("displayName");
@@ -461,11 +470,23 @@ class ScimDstServiceTest {
             testDstService = null;
         }
         assertThat(testDstService).isNull();
-        when(serviceSettings.getEntity()).thenReturn("Users");
+        when(serviceSettings.getEntity()).thenReturn(ScimDao.USERS);
     }
 
     @Test
     @Order(22)
+    void constructorWithCacheWithoutSourceUUIDShouldFail() throws LscServiceException {
+    	when(serviceSettings.getSourceUUID()).thenReturn(null);
+        try {
+            testDstService = new ScimDstService(task);
+        } catch (LscServiceConfigurationException e) {
+            testDstService = null;
+        }
+        assertThat(testDstService).isNull();
+    }
+
+    @Test
+    @Order(23)
     void constructorWithoutConnectionSettingsShouldFail() throws LscServiceException {
         when(pluginDestinationService.getConnection().getReference()).thenReturn(null);
         try {
@@ -477,7 +498,7 @@ class ScimDstServiceTest {
     }
 
     @Test 
-    @Order(23)
+    @Order(24)
     void returnSupportedConnectionType() throws Exception {
     	testDstService = new ScimDstService(task);
         Collection<Class<? extends ConnectionType>> supportedTypes = testDstService.getSupportedConnectionType();
@@ -485,7 +506,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(24)
+    @Order(25)
     void getListPivotsUnauthenticatedShouldFail() throws LscServiceException {
     	when(connectionType.getPassword()).thenReturn("");
     	Map<String, LscDatasets> bean = null;
@@ -499,7 +520,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(24)
+    @Order(26)
     void getBeanUnauthenticatedShouldFail() throws LscServiceException {
     	when(connectionType.getPassword()).thenReturn("");
     	IBean bean = null;
@@ -515,7 +536,7 @@ class ScimDstServiceTest {
     }
     
     @Test
-    @Order(25)
+    @Order(27)
     void addUserUnauthenticatedShouldFail() throws LscServiceException {
     	when(connectionType.getPassword()).thenReturn("");
     	testDstService = new ScimDstService(task);
@@ -535,5 +556,4 @@ class ScimDstServiceTest {
     	}
 		assertThat(result).isFalse();
     }
-
 }
