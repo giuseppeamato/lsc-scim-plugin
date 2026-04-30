@@ -13,6 +13,10 @@ import javax.ws.rs.client.ClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author Giuseppe Amato
+ *
+ */
 public class InsecureTestClientBuilderCustomizer implements ClientBuilderCustomizer {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(InsecureTestClientBuilderCustomizer.class);
