@@ -48,6 +48,7 @@ import com.google.common.collect.ImmutableMap;
 import it.pz8.lsc.plugins.connectors.scim.generated.Oauth2ConnectionSettings;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
 import it.pz8.lsc.plugins.connectors.scim.rs.AuthClientBuilder;
+import it.pz8.lsc.plugins.connectors.scim.rs.TestSSLUtils;
 
 /**
  * @author Giuseppe Amato
@@ -91,6 +92,7 @@ class ScimSrcServiceTest {
     
         mappedPort = wso2ids.getMappedPort(EXPOSED_PORT);
         LOGGER.info("Mapped port: {}:{}", mappedPort, EXPOSED_PORT);
+        
     	createIdsApplication();
     }
     
@@ -426,7 +428,6 @@ class ScimSrcServiceTest {
     @Test
     @Order(19)
     void listPivotOauth2() throws LscServiceException {
-    	LOGGER.debug("************* listPivotOauth2 ");
     	Oauth2ConnectionSettings oauth2Settings = mock(Oauth2ConnectionSettings.class);
     	when(connectionType.getAny()).thenReturn(List.of(oauth2Settings));
     	when(oauth2Settings.getTokenURL()).thenReturn(String.format(OAUTH2_TOKENURL, mappedPort));
@@ -435,11 +436,9 @@ class ScimSrcServiceTest {
 		when(oauth2Settings.getClientSecret()).thenReturn(OAUTH2_CLIENTSECRET);
 		Map<String, LscDatasets> listPivots = null;
     	try {
-    		LOGGER.debug("************* create src instance");
+    		TestSSLUtils.disableSSLVerification();
     		ScimSrcService testSrcService = new ScimSrcService(task);
-    		LOGGER.debug("************* call getListPivots");
     		listPivots = testSrcService.getListPivots();
-    		LOGGER.debug("************* list pivots {} ", listPivots);
     	} catch (Exception e) {
     		e.printStackTrace();
     		listPivots = null;
