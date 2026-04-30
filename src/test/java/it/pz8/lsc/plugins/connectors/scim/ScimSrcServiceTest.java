@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
@@ -445,4 +446,39 @@ class ScimSrcServiceTest {
     	}
     	assertThat(listPivots).isNotNull();
     }
+    
+    @Test
+    @Order(20)
+    void listPivotOauth2WithRefreshToken() throws LscServiceException {
+    	Oauth2ConnectionSettings oauth2Settings = mock(Oauth2ConnectionSettings.class);
+    	when(connectionType.getAny()).thenReturn(List.of(oauth2Settings));
+    	when(oauth2Settings.getTokenURL()).thenReturn(String.format(OAUTH2_TOKENURL, mappedPort));
+    	when(oauth2Settings.getScope()).thenReturn(OAUTH2_SCOPE);
+		when(oauth2Settings.getClientId()).thenReturn(OAUTH2_CLIENTID);
+		when(oauth2Settings.getClientSecret()).thenReturn(OAUTH2_CLIENTSECRET);
+		Map<String, LscDatasets> listPivots = null;
+    	try {
+    		TestSSLUtils.disableSSLVerification();
+    		ScimSrcService testSrcService = new ScimSrcService(task);
+    		listPivots = testSrcService.getListPivots();    		
+    		
+    		long startTime = System.currentTimeMillis();
+            long timeoutMillis = TimeUnit.SECONDS.toMillis(90);
+            listPivots = null;
+            while (System.currentTimeMillis() - startTime < timeoutMillis) {
+            	Thread.sleep(15000);
+            	try {
+            		listPivots = testSrcService.getListPivots();
+            	} catch (Exception e) {
+            		listPivots = null;
+            	}
+            }
+            assertThat(listPivots).isNotNull();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		listPivots = null;
+    	}
+    	assertThat(listPivots).isNotNull();
+    }
+    
 }

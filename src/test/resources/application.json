@@ -9,8 +9,8 @@
             "grantTypes": ["client_credentials"],
             "accessToken": {
                 "type": "JWT",
-                "userAccessTokenExpiryInSeconds": 3600,
-				"applicationAccessTokenExpiryInSeconds": 3600
+                "userAccessTokenExpiryInSeconds": 60,
+				"applicationAccessTokenExpiryInSeconds": 60
             }
         }
 	}
