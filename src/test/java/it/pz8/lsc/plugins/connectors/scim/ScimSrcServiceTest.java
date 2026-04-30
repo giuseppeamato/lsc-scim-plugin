@@ -437,6 +437,7 @@ class ScimSrcServiceTest {
     		ScimSrcService testSrcService = new ScimSrcService(task);
     		listPivots = testSrcService.getListPivots();
     	} catch (LscServiceException e) {
+    		e.printStackTrace();
     		listPivots = null;
     	}
     	assertThat(listPivots).isNotNull();
