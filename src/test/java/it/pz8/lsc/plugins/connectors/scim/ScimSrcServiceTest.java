@@ -426,6 +426,7 @@ class ScimSrcServiceTest {
     @Test
     @Order(19)
     void listPivotOauth2() throws LscServiceException {
+    	LOGGER.debug("************* listPivotOauth2 ");
     	Oauth2ConnectionSettings oauth2Settings = mock(Oauth2ConnectionSettings.class);
     	when(connectionType.getAny()).thenReturn(List.of(oauth2Settings));
     	when(oauth2Settings.getTokenURL()).thenReturn(String.format(OAUTH2_TOKENURL, mappedPort));
@@ -434,9 +435,12 @@ class ScimSrcServiceTest {
 		when(oauth2Settings.getClientSecret()).thenReturn(OAUTH2_CLIENTSECRET);
 		Map<String, LscDatasets> listPivots = null;
     	try {
+    		LOGGER.debug("************* create src instance");
     		ScimSrcService testSrcService = new ScimSrcService(task);
+    		LOGGER.debug("************* call getListPivots");
     		listPivots = testSrcService.getListPivots();
-    	} catch (LscServiceException e) {
+    		LOGGER.debug("************* list pivots {} ", listPivots);
+    	} catch (Exception e) {
     		e.printStackTrace();
     		listPivots = null;
     	}
