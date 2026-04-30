@@ -41,12 +41,12 @@ public class Oauth2TokenProvider implements TokenProvider {
     
     @Override
     public String getToken() throws IOException {
-        if (currentToken != null && !isTokenExpired()) {
+        if (!isTokenExpired()) {
             return currentToken.getValue();
         }
         lock.lock();
         try {
-            if (currentToken == null || isTokenExpired()) {
+            if (isTokenExpired()) {
                 refreshToken();
             }
             return currentToken.getValue();

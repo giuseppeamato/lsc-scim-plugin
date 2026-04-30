@@ -20,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringUtils;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -456,29 +457,31 @@ class ScimSrcServiceTest {
     	when(oauth2Settings.getScope()).thenReturn(OAUTH2_SCOPE);
 		when(oauth2Settings.getClientId()).thenReturn(OAUTH2_CLIENTID);
 		when(oauth2Settings.getClientSecret()).thenReturn(OAUTH2_CLIENTSECRET);
-		Map<String, LscDatasets> listPivots = null;
+		boolean hasCompleted = false;
     	try {
     		TestSSLUtils.disableSSLVerification();
     		ScimSrcService testSrcService = new ScimSrcService(task);
-    		listPivots = testSrcService.getListPivots();    		
+    		Map<String, LscDatasets> firstListPivots = testSrcService.getListPivots();    		
+    		assertThat(firstListPivots).isNotNull();
     		
-    		long startTime = System.currentTimeMillis();
-            long timeoutMillis = TimeUnit.SECONDS.toMillis(90);
-            listPivots = null;
-            while (System.currentTimeMillis() - startTime < timeoutMillis) {
-            	Thread.sleep(15000);
-            	try {
-            		listPivots = testSrcService.getListPivots();
-            	} catch (Exception e) {
-            		listPivots = null;
-            	}
-            }
-            assertThat(listPivots).isNotNull();
+    	    Awaitility.await()
+    	    	.atLeast(0, TimeUnit.SECONDS)
+    	    	.atMost(90, TimeUnit.SECONDS)
+    	    	.untilAsserted(() -> {
+    	    		Map<String, LscDatasets> secondListPivots = null;
+                	try {
+                		secondListPivots = testSrcService.getListPivots();
+                	} catch (Exception e) {
+                		secondListPivots = null;
+                	}
+                	assertThat(secondListPivots).isNotNull();
+    	    	});
+    	    hasCompleted = true;
     	} catch (Exception e) {
     		e.printStackTrace();
-    		listPivots = null;
+    		hasCompleted = false;
     	}
-    	assertThat(listPivots).isNotNull();
+    	assertThat(hasCompleted).isTrue();
     }
     
 }

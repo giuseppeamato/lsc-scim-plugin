@@ -86,7 +86,7 @@ public class ScimDstService implements IWritableService {
             IBean bean = beanClass.getDeclaredConstructor().newInstance();
             bean.setMainIdentifier(pivotValue);        
             LscDatasets datasets = new LscDatasets();
-            entity.entrySet().stream().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null ? new LinkedHashSet<>() : entry.getValue()));
+            entity.entrySet().forEach(entry -> datasets.put(entry.getKey(), entry.getValue()==null ? new LinkedHashSet<>() : entry.getValue()));
             bean.setDatasets(datasets);
             return bean;
         } catch (NotFoundException e) {
