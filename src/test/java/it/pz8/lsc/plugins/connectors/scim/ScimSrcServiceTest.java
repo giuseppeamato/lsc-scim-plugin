@@ -420,7 +420,9 @@ class ScimSrcServiceTest {
     	IBean bean = null;
     	try {
     		ScimSrcService testSrcService = new ScimSrcService(task);
-    		bean = testSrcService.getBean("id", new LscDatasets(), FROM_SAME_SERVICE);
+    		LscDatasets lscDatasets = new LscDatasets();
+    		lscDatasets.put("id", "admin");
+    		bean = testSrcService.getBean("id", lscDatasets, FROM_SAME_SERVICE);
     	} catch (LscServiceException e) {
     		bean = null;
     	}
@@ -483,5 +485,4 @@ class ScimSrcServiceTest {
     	}
     	assertThat(hasCompleted).isTrue();
     }
-    
 }
