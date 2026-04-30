@@ -15,11 +15,7 @@ public class TokenProviderFactory {
 	}
 	
 	public static TokenProvider from(Oauth2ConnectionSettings config) throws URISyntaxException {
-	    if (config.getToken() != null && !config.getToken().isEmpty()) {
-	        return new Oauth2StaticTokenProvider(config.getToken());
-	    } else {
-	    	return new Oauth2TokenProvider(config.getClientId(), config.getClientSecret(), config.getScope(), new URI(config.getTokenURL()));
-	    }
+	    return new Oauth2TokenProvider(config.getClientId(), config.getClientSecret(), config.getScope(), new URI(config.getTokenURL()));
 	}
 	
 }
