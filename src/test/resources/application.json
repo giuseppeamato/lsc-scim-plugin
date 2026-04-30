@@ -1,0 +1,17 @@
+{
+  "name": "TestLSCScim",
+  "templateId": "m2m-application",
+  "applicationEnabled": true,
+  "inboundProtocolConfiguration": {
+		"oidc": {
+            "clientId": "q2orWbmKJwEeBRyMzpJmFjO8nmYc",
+            "clientSecret": "RmcpR3fml352f58N__rtL9TuFYgDWlfVnV9zRXsRjtsa",
+            "grantTypes": ["client_credentials"],
+            "accessToken": {
+                "type": "JWT",
+                "userAccessTokenExpiryInSeconds": 3600,
+				"applicationAccessTokenExpiryInSeconds": 3600
+            }
+        }
+	}
+}
