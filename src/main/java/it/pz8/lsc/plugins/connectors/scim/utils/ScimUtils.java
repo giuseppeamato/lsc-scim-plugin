@@ -9,7 +9,7 @@ import it.pz8.lsc.plugins.connectors.scim.bean.CachedData;
  */
 public final class ScimUtils {
 	
-	private static volatile ScimUUIDMappingCache cache;
+	private static ScimUUIDMappingCache cache;
 
 	private ScimUtils() {
 	}
