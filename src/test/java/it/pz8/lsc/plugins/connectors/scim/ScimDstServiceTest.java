@@ -60,7 +60,7 @@ class ScimDstServiceTest {
     private static final int EXPOSED_PORT = 9443;  
     private static final String IMAGE_NAME = "wso2/wso2is:7.2.0-alpine";
     private static final int TIMEOUT = 300;
-    private static final String BASEPATH = "https://localhost:%d/scim2";
+    private static final String SCIM_BASEPATH = "https://localhost:%d/scim2";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "admin";
     private static final String CACHEDB_PATH = "jdbc:h2:file:./data/scim2mapping";
@@ -97,7 +97,7 @@ class ScimDstServiceTest {
         task = mock(TaskType.class);
         connectionType = mock(PluginConnectionType.class);
         ServiceType.Connection connection = mock(ServiceType.Connection.class);
-        when(connectionType.getUrl()).thenReturn(String.format(BASEPATH, mappedPort));
+        when(connectionType.getUrl()).thenReturn(String.format(SCIM_BASEPATH, mappedPort));
         when(connectionType.getUsername()).thenReturn(USERNAME);
         when(connectionType.getPassword()).thenReturn(PASSWORD);
         when(connection.getReference()).thenReturn(connectionType);
@@ -210,24 +210,6 @@ class ScimDstServiceTest {
 
     @Test
     @Order(6)
-    void updateMultivalueAttribute() throws LscServiceException, NamingException {
-        testDstService = new ScimDstService(task);
-        LscDatasets lscDatasets = new LscDatasets();
-        lscDatasets.put("uid", "pippo");
-        IBean destinationBean = testDstService.getBean("pippo", lscDatasets, true);
-        LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
-        lm.setMainIdentifer("pippo");
-        lm.setDestinationBean(destinationBean);
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[]", List.of("other@localhost.com"));
-        lm.setLscAttributeModifications(List.of(datasetModification));
-        boolean result = testDstService.apply(lm);
-        assertThat(result).isTrue();
-        IBean bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("emails")).isEqualTo("other@localhost.com");        
-    }
-
-    @Test
-    @Order(7)
     void updateMultivalueWithPathAttribute() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscDatasets lscDatasets = new LscDatasets();
@@ -242,6 +224,24 @@ class ScimDstServiceTest {
         assertThat(result).isTrue();
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
         assertThat(bean.getDatasetFirstValueById("emails[type eq work]")).isEqualTo("dev@acme.com");        
+    }
+
+    @Test
+    @Order(7)
+    void updateMultivalueAttribute() throws LscServiceException, NamingException {
+        testDstService = new ScimDstService(task);
+        LscDatasets lscDatasets = new LscDatasets();
+        lscDatasets.put("uid", "pippo");
+        IBean destinationBean = testDstService.getBean("pippo", lscDatasets, true);
+        LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
+        lm.setMainIdentifer("pippo");
+        lm.setDestinationBean(destinationBean);
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[]", List.of("other@localhost.com"));
+        lm.setLscAttributeModifications(List.of(datasetModification));
+        boolean result = testDstService.apply(lm);
+        assertThat(result).isTrue();
+        IBean bean = testDstService.getBean("pippo", lscDatasets, true);
+        assertThat(bean.getDatasetFirstValueById("emails")).isEqualTo("other@localhost.com");        
     }
 
     @Test

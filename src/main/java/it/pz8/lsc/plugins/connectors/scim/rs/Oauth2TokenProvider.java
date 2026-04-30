@@ -2,7 +2,7 @@ package it.pz8.lsc.plugins.connectors.scim.rs;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +28,8 @@ public class Oauth2TokenProvider implements TokenProvider {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Oauth2TokenProvider.class);
 	
 	private TokenRequest request;
-	private volatile AccessToken currentToken;
-	private volatile long tokenObtainedTime = 0;	
-    private final ReentrantLock lock = new ReentrantLock();
+	private final AtomicReference<AccessToken> currentToken = new AtomicReference<>();
+	private volatile long tokenObtainedTime = 0;
     
     public Oauth2TokenProvider(String clientId, String clientSecret, String scope, URI tokenEndpoint) {
     	LOGGER.debug("Init Oauth2 Token Provider");
@@ -42,23 +41,16 @@ public class Oauth2TokenProvider implements TokenProvider {
     @Override
     public String getToken() throws IOException {
         if (!isTokenExpired()) {
-            return currentToken.getValue();
+            return currentToken.get().getValue();
         }
-        lock.lock();
-        try {
-            if (isTokenExpired()) {
-                refreshToken();
-            }
-            return currentToken.getValue();
-        } finally {
-            lock.unlock();
-        }
+        refreshToken();
+        return currentToken.get().getValue();
     }
     
     private boolean isTokenExpired() {
-        if (currentToken == null) return true;
+        if (currentToken.get() == null) return true;
         long now = System.currentTimeMillis() / 1000;
-        long expiresIn = currentToken.getLifetime();
+        long expiresIn = currentToken.get().getLifetime();
         long expireAt = (tokenObtainedTime + expiresIn - 30);
         return now>=expireAt;
     }
@@ -71,7 +63,7 @@ public class Oauth2TokenProvider implements TokenProvider {
 	        if (response.indicatesSuccess()) {
 	        	LOGGER.debug("Token received.");
 	        	AccessTokenResponse successResponse = response.toSuccessResponse();
-	        	currentToken = successResponse.getTokens().getAccessToken();
+	            currentToken.compareAndSet(currentToken.get(), successResponse.getTokens().getAccessToken());
 	        	tokenObtainedTime = System.currentTimeMillis() / 1000;
 	        } else {
 	            HTTPResponse errorResponse = response.toHTTPResponse();            
