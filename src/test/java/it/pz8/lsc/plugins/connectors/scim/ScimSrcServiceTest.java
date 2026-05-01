@@ -485,4 +485,24 @@ class ScimSrcServiceTest {
     	}
     	assertThat(hasCompleted).isTrue();
     }
+    
+    @Test
+    @Order(20)
+    void wrongOauth2ConfMustFail() throws LscServiceException {
+    	Oauth2ConnectionSettings oauth2Settings = mock(Oauth2ConnectionSettings.class);
+    	when(connectionType.getAny()).thenReturn(List.of(oauth2Settings));
+    	when(oauth2Settings.getTokenURL()).thenReturn(String.format(OAUTH2_TOKENURL, 0));
+    	when(oauth2Settings.getScope()).thenReturn(OAUTH2_SCOPE);
+		when(oauth2Settings.getClientId()).thenReturn(OAUTH2_CLIENTID);
+		when(oauth2Settings.getClientSecret()).thenReturn(OAUTH2_CLIENTSECRET);
+		Map<String, LscDatasets> firstListPivots = null;
+    	try {
+    		TestSSLUtils.disableSSLVerification();
+    		ScimSrcService testSrcService = new ScimSrcService(task);
+    		firstListPivots = testSrcService.getListPivots();    		
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    	assertThat(firstListPivots).isNull();
+    }
 }

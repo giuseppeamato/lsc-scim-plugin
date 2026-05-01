@@ -25,6 +25,7 @@ public class ScimUUIDMappingCache {
 	
 	private final HikariDataSource dataSource;
 	private final boolean writeEnabled;
+	private enum FILTER_FIELDS {PIVOT, SOURCE_UUID};
 	
 	public ScimUUIDMappingCache(ScimServiceSettings settings) {
 		LOGGER.debug("Init service");
@@ -105,8 +106,14 @@ public class ScimUUIDMappingCache {
     public CachedData getCachedData(String filterName, String filterValue, String entity) {
     	LOGGER.debug("getCachedData filter:{}={} entity:{}", filterName, filterValue, entity);
     	CachedData cachedData = null;
+    	String sql;
+    	if (filterName.equals(FILTER_FIELDS.PIVOT)) {
+    		sql = "SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(PIVOT) = ? AND ENTITY = ?";
+    	} else {
+    		sql = "SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(SOURCE_UUID) = ? AND ENTITY = ?";
+    	}
     	try (var conn = dataSource.getConnection(); 
-				var ps = conn.prepareStatement(String.format("SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(%s) = ? AND ENTITY = ?", filterName.equals("PIVOT")?"PIVOT":"SOURCE_UUID"))) {
+				var ps = conn.prepareStatement(sql)) {
 		    ps.setString(1, filterValue.toLowerCase());
 		    ps.setString(2, entity);
 		    try (ResultSet rs = ps.executeQuery()) {
