@@ -556,4 +556,23 @@ class ScimDstServiceTest {
     	}
 		assertThat(result).isFalse();
     }
+    
+    @Test
+    @Order(28)
+    void updateUserUnauthenticatedShouldFail() throws LscServiceException {
+    	when(connectionType.getPassword()).thenReturn("");
+    	testDstService = new ScimDstService(task);
+    	boolean result = false;
+    	try {
+    		LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
+    		lm.setMainIdentifer("pippo");
+    		LscDatasetModification email = new LscDatasetModification(ADD_VALUES, "emails[]", List.of("pezzotto@localhost.com"));
+    		lm.setLscAttributeModifications(List.of(email));
+    		result = testDstService.apply(lm);
+    	} catch (LscServiceCommunicationException e) {
+    		result = false;
+    	}
+		assertThat(result).isFalse();
+    }
+
 }
