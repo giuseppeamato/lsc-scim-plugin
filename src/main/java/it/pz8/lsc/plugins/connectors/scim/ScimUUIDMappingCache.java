@@ -3,7 +3,6 @@ package it.pz8.lsc.plugins.connectors.scim;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
 
 import org.lsc.configuration.DatabaseConnectionType;
 import org.slf4j.Logger;
@@ -106,12 +105,8 @@ public class ScimUUIDMappingCache {
     public CachedData getCachedData(String filterName, String filterValue, String entity) {
     	LOGGER.debug("getCachedData filter:{}={} entity:{}", filterName, filterValue, entity);
     	CachedData cachedData = null;
-    	Set<String> allowedColumns = Set.of("PIVOT", "SOURCE_UUID");
-    	if (!allowedColumns.contains(filterName)) {
-    		return null;
-    	}
     	try (var conn = dataSource.getConnection(); 
-				var ps = conn.prepareStatement(String.format("SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(%s) = ? AND ENTITY = ?", filterName))) {
+				var ps = conn.prepareStatement(String.format("SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(%s) = ? AND ENTITY = ?", filterName.equals("PIVOT")?"PIVOT":"SOURCE_UUID"))) {
 		    ps.setString(1, filterValue.toLowerCase());
 		    ps.setString(2, entity);
 		    try (ResultSet rs = ps.executeQuery()) {
