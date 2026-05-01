@@ -487,7 +487,7 @@ class ScimSrcServiceTest {
     }
     
     @Test
-    @Order(20)
+    @Order(21)
     void wrongOauth2ConfMustFail() throws LscServiceException {
     	Oauth2ConnectionSettings oauth2Settings = mock(Oauth2ConnectionSettings.class);
     	when(connectionType.getAny()).thenReturn(List.of(oauth2Settings));

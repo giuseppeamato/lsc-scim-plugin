@@ -107,7 +107,7 @@ public class ScimUUIDMappingCache {
     	LOGGER.debug("getCachedData filter:{}={} entity:{}", filterName, filterValue, entity);
     	CachedData cachedData = null;
     	String sql;
-    	if (filterName.equals(FILTER_FIELDS.PIVOT)) {
+    	if (filterName.equals(FILTER_FIELDS.PIVOT.name())) {
     		sql = "SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(PIVOT) = ? AND ENTITY = ?";
     	} else {
     		sql = "SELECT PIVOT, SOURCE_UUID, SCIM_ID FROM MAPPING WHERE lower(SOURCE_UUID) = ? AND ENTITY = ?";
