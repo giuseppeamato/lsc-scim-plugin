@@ -74,6 +74,7 @@ import org.lsc.configuration.ValuesType;
     "attributes",
     "excludedAttributes",
     "schema",
+    "flatMultivalueStrategy",
     "writableAttributes"
 })
 @XmlRootElement(name = "scimServiceSettings")
@@ -93,6 +94,8 @@ public class ScimServiceSettings
     protected String attributes;
     protected String excludedAttributes;
     protected SchemasType schema;
+    @XmlSchemaType(name = "string")
+    protected FlatMultivalueStrategyType flatMultivalueStrategy;
     protected ValuesType writableAttributes;
 
     /**
@@ -357,6 +360,30 @@ public class ScimServiceSettings
      */
     public void setSchema(SchemasType value) {
         this.schema = value;
+    }
+
+    /**
+     * Recupera il valore della proprietà flatMultivalueStrategy.
+     *
+     * @return
+     *     possible object is
+     *     {@link FlatMultivalueStrategyType }
+     *
+     */
+    public FlatMultivalueStrategyType getFlatMultivalueStrategy() {
+        return flatMultivalueStrategy;
+    }
+
+    /**
+     * Imposta il valore della proprietà flatMultivalueStrategy.
+     *
+     * @param value
+     *     allowed object is
+     *     {@link FlatMultivalueStrategyType }
+     *
+     */
+    public void setFlatMultivalueStrategy(FlatMultivalueStrategyType value) {
+        this.flatMultivalueStrategy = value;
     }
 
     /**

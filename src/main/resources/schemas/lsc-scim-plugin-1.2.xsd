@@ -30,7 +30,14 @@
 			<xsd:element name="uri" type="xsd:string" minOccurs="1" />
 		</xsd:sequence>
 	</xsd:complexType>
-		
+
+	<xsd:simpleType name="flatMultivalueStrategyType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="ELEMENT_DIFF" />
+			<xsd:enumeration value="WHOLESALE_REPLACE" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
 	<xsd:element name="scimServiceSettings">
 		<xsd:complexType>
 			<xsd:complexContent>
@@ -51,7 +58,8 @@
 						<xsd:element name="filter" type="xsd:string" minOccurs="0" />
 						<xsd:element name="attributes" type="xsd:string" minOccurs="0" />
 						<xsd:element name="excludedAttributes" type="xsd:string" minOccurs="0" />						
-						<xsd:element name="schema" type="schemasType" minOccurs="0" />						
+						<xsd:element name="schema" type="schemasType" minOccurs="0" />
+						<xsd:element name="flatMultivalueStrategy" type="flatMultivalueStrategyType" minOccurs="0" />
 						<xsd:sequence>
 							<xsd:element name="writableAttributes" type="lsc:valuesType" minOccurs="0" />
 						</xsd:sequence>
