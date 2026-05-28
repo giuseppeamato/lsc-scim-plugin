@@ -1,13 +1,13 @@
 package it.pz8.lsc.plugins.connectors.scim;
 
 import static org.lsc.LscDatasetModification.LscDatasetModificationType.DELETE_VALUES;
-import static org.lsc.LscDatasetModification.LscDatasetModificationType.REPLACE_VALUES;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +25,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.lsc.LscDatasetModification;
 import org.lsc.LscDatasets;
@@ -39,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wnameless.json.flattener.FlattenMode;
 import com.github.wnameless.json.flattener.JsonFlattener;
@@ -47,7 +47,8 @@ import com.github.wnameless.json.unflattener.JsonUnflattener;
 import it.pz8.lsc.plugins.connectors.scim.bean.OperationType;
 import it.pz8.lsc.plugins.connectors.scim.bean.ScimPatchResource;
 import it.pz8.lsc.plugins.connectors.scim.bean.ScimPathOperation;
-import it.pz8.lsc.plugins.connectors.scim.bean.ValueTypeStruct;
+import it.pz8.lsc.plugins.connectors.scim.bean.ScimSelector;
+import it.pz8.lsc.plugins.connectors.scim.generated.FlatMultivalueStrategyType;
 import it.pz8.lsc.plugins.connectors.scim.generated.NamespaceType;
 import it.pz8.lsc.plugins.connectors.scim.generated.ScimServiceSettings;
 import it.pz8.lsc.plugins.connectors.scim.rs.AuthClientBuilder;
@@ -64,14 +65,10 @@ public class ScimDao {
     public static final String SCHEMAS = "schemas";
     public static final String ID = "id";
     public static final String ATTRIBUTES_PARAM = "attributes";
-    public static final String TYPE_ATTRIBUTE = "type";
-    public static final String DISPLAY_ATTRIBUTE = "display";
-    public static final String VALUE_ATTRIBUTE = "value";
-    protected static final String[] MULTIVALUE_ATTRS_SELECTORS = {TYPE_ATTRIBUTE, DISPLAY_ATTRIBUTE};
     public static final String EQ_OPERATOR = " eq ";
     private static final String HTTP_STATUS_TPL_MSG = "status: %d, message: %s";
     private static final int PAGESIZE_DEFAULT_VALUE = 0;
-    private static final Pattern MULTIVALUE_PATTERN = Pattern.compile("\\[([^\\[\\]]+)\\]");
+    private static final Pattern OBJECT_ARRAY_KEY = Pattern.compile("^(.+)\\[(\\d+)\\]\\.(.+)$");
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ScimDao.class);
 
@@ -85,6 +82,7 @@ public class ScimDao {
     private final Optional<String> excludedAttributes;
     private final List<NamespaceType> namespaces;
     private final List<String> writableAttributes;
+    private final FlatMultivalueStrategyType flatMultivalueStrategy;
     private final ScimUUIDMappingCache cache;
     
     private WebTarget target; 
@@ -103,7 +101,8 @@ public class ScimDao {
         this.excludedAttributes = getStringParameter(settings.getExcludedAttributes()).map(this::replaceAllAliases);
         this.pageSize = Optional.ofNullable(settings.getPageSize()).filter(size -> size > 0);
         this.writableAttributes = Optional.ofNullable(settings.getWritableAttributes()).map(ValuesType::getString).orElse(null);
-        
+        this.flatMultivalueStrategy = Optional.ofNullable(settings.getFlatMultivalueStrategy()).orElse(FlatMultivalueStrategyType.ELEMENT_DIFF);
+
         cache = new ScimUUIDMappingCache(settings);
 
         Client client = AuthClientBuilder.build(connection);
@@ -206,7 +205,7 @@ public class ScimDao {
             if (!checkResponse(response)) {
                 if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                     throw new NotFoundException(String.format("%s %s cannot be found", getEntityName(), id));
-                }                
+                }
                 String errorMessage = String.format(HTTP_STATUS_TPL_MSG, response.getStatus(), response.readEntity(String.class));
                 LOGGER.error(errorMessage);
                 throw new ProcessingException(errorMessage);
@@ -283,16 +282,16 @@ public class ScimDao {
             LOGGER.debug("Create {} in: {} \n[{}]", getEntityName(), currentTarget.getUri(), lm);
             Map<String, Object> entityattributes = new HashMap<>();
             entityattributes.put(SCHEMAS, new ArrayList<String>());
-            List<LscDatasetModification> diffs = lm.getLscAttributeModifications();
-            for (LscDatasetModification attributeModification : diffs) {
-                if (isMultivaluedAttribute(attributeModification.getAttributeName())) {
-                    String attrName = getMultivaluedAttributeName(attributeModification.getAttributeName());
-                    String attrIdx = getMultivaluedAttributeIndex(attributeModification.getAttributeName());
-                    List<Object> entityattribute = (List<Object>)entityattributes.get(attrName);
-                    List<Object> multivalues = addToMultivalueAttribute(entityattribute, attrIdx, attributeModification.getValues());
-                    entityattributes.put(attrName, multivalues);
+            for (LscDatasetModification mod : lm.getLscAttributeModifications()) {
+                String attrName = mod.getAttributeName();
+                if (hasMultivalueSelector(attrName)) {
+                    String baseName = extractBaseName(attrName);
+                    ScimSelector selector = ScimSelector.parse(ScimSelector.extractBody(attrName));
+                    String subField = extractSubField(attrName);
+                    List<Object> existing = (List<Object>) entityattributes.get(baseName);
+                    entityattributes.put(baseName, addToMultivalueAttribute(existing, selector, subField, mod.getValues()));
                 } else {
-                    entityattributes.put(attributeModification.getAttributeName(), getFirstValueAsString(attributeModification.getValues()));
+                    entityattributes.put(attrName, getFirstValueAsString(mod.getValues()));
                 }
             }
             String unflattenDiffs = unflatten(entityattributes);
@@ -321,17 +320,83 @@ public class ScimDao {
         return result;
     }
     
-    private List<Object> addToMultivalueAttribute(List<Object> entityattribute, String attrIdx, List<Object> values) throws JsonProcessingException {
+    /**
+     * Adds the given {@code values} into the multivalued list under the given {@code selector}
+     * and {@code subField}.
+     *
+     * <p>Behavior:
+     * <ul>
+     *   <li>Empty selector ({@code attr[]}): primitive append (legacy).</li>
+     *   <li>Selector + subField equal to {@code "value"}: multi-value yields multi-element
+     *       (legacy multi-element behavior). If a previously-built element with matching
+     *       selector exists without a {@code value} field (because a sub-field diff was
+     *       processed first), the first value fills that slot before new elements are added.</li>
+     *   <li>Selector + a non-{@code value} subField (e.g. {@code .streetAddress}): merges
+     *       into the single element matching the selector — creating it if absent — so
+     *       multiple datasets like {@code addresses[type eq "work"].streetAddress} and
+     *       {@code addresses[type eq "work"].locality} produce ONE address with both fields.</li>
+     * </ul>
+     */
+    private List<Object> addToMultivalueAttribute(List<Object> entityattribute, ScimSelector selector, String subField, List<Object> values) throws JsonProcessingException {
         List<Object> multivalues = Optional.ofNullable(entityattribute).orElse(new ArrayList<>());
-        if (StringUtils.isBlank(attrIdx)) {
-			for (Object modValue : values) {
-				modValue = (isJson(modValue))?mapper.readValue(modValue.toString(), Object.class):modValue;
-				multivalues.add(modValue);
-			}
+        if (selector.isEmpty()) {
+            for (Object modValue : values) {
+                multivalues.add(isJson(modValue) ? mapper.readValue(modValue.toString(), Object.class) : modValue);
+            }
+            return multivalues;
+        }
+        boolean isValueField = ScimSelector.VALUE.equals(subField);
+        if (isValueField) {
+            Map<String, Object> existing = findElementMatchingSelector(multivalues, selector);
+            for (Object modValue : values) {
+                if (existing != null && !existing.containsKey(ScimSelector.VALUE)) {
+                    existing.put(ScimSelector.VALUE, String.valueOf(modValue));
+                    existing = null;
+                } else {
+                    Map<String, Object> element = new LinkedHashMap<>(selector.toElementMap());
+                    element.put(ScimSelector.VALUE, String.valueOf(modValue));
+                    multivalues.add(element);
+                }
+            }
         } else {
-            multivalues.add(new ValueTypeStruct(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(values)));
+            Map<String, Object> existing = findElementMatchingSelector(multivalues, selector);
+            if (existing == null) {
+                existing = new LinkedHashMap<>(selector.toElementMap());
+                multivalues.add(existing);
+            }
+            existing.put(subField, getFirstValueAsString(values));
         }
         return multivalues;
+    }
+
+    /** Returns the sub-field name after the {@code ]} of a selector path, or {@link ScimSelector#VALUE} when absent. */
+    private static String extractSubField(String attrName) {
+        String tail = StringUtils.substringAfter(attrName, "]");
+        if (StringUtils.isEmpty(tail)) {
+            return ScimSelector.VALUE;
+        }
+        if (tail.startsWith(".") && tail.length() > 1) {
+            return tail.substring(1);
+        }
+        return ScimSelector.VALUE;
+    }
+
+    /** First element in the list whose entries include all selector clauses with matching values. */
+    private static Map<String, Object> findElementMatchingSelector(List<Object> multivalues, ScimSelector selector) {
+        for (Object o : multivalues) {
+            if (o instanceof Map) {
+                Map<String, Object> m = (Map<String, Object>) o;
+                boolean matches = true;
+                for (Map.Entry<String, Object> e : selector.asMap().entrySet()) {
+                    if (!java.util.Objects.equals(m.get(e.getKey()), e.getValue())) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) return m;
+            }
+        }
+        return null;
     }
     
     public boolean update(LscModifications lm) throws LscServiceException {
@@ -360,8 +425,9 @@ public class ScimDao {
                     break;
                 }
                 if (operation!=null) {
-                    ScimPathOperation op = buildPatchOperation(operation, diff, lm);
-                    patchOp.addOperations(op);
+                    for (ScimPathOperation op : buildPatchOperations(operation, diff, lm)) {
+                        patchOp.addOperations(op);
+                    }
                 }
             }
             if (!patchOp.getOperations().isEmpty()) {
@@ -387,30 +453,349 @@ public class ScimDao {
         return result;
     }
 
-    private ScimPathOperation buildPatchOperation(String operation, LscDatasetModification diff, LscModifications lm) {
-        String path = replaceAlias(diff.getAttributeName());
-        Serializable value = getFirstValueAsString(diff.getValues());
-        if (isMultivaluedAttribute(diff.getAttributeName()) && !diff.getOperation().equals(DELETE_VALUES)) {
-            path = replaceAlias(getMultivaluedAttributeName(diff.getAttributeName()));
-            String attrIdx = getMultivaluedAttributeIndex(diff.getAttributeName());
-            if (StringUtils.isBlank(attrIdx)) {
-           		value = stringValuesToJsonValues(diff.getValues());
-            } else {
-                // Multivalue with path
-                if (hasValue(lm.getDestinationBean(), diff.getAttributeName())) {
-                    path = (!diff.getOperation().equals(REPLACE_VALUES))?path:replaceAlias(diff.getAttributeName()).concat(".").concat(VALUE_ATTRIBUTE);
-                    value = getFirstValueAsString(diff.getValues());
-                    operation = OperationType.REPLACE.getName();
-                } else {
-                	path = getMultivaluedAttributeName(diff.getAttributeName());
-                    value = new ArrayList<Serializable>();
-                    ((List<Serializable>)value).add(new ValueTypeStruct(StringUtils.substringAfter(attrIdx, TYPE_ATTRIBUTE+EQ_OPERATOR), getFirstValueAsString(diff.getValues())));                	
-                    operation = OperationType.ADD.getName();
+    /**
+     * Builds the SCIM PATCH operation(s) corresponding to a single LSC diff. The emitted shape
+     * depends on whether the attribute path carries a value selector and, for flat multivalue
+     * paths, on the per-task {@code flatMultivalueStrategy}.
+     *
+     * <p><b>Flat multivalue paths</b> ({@code attr[]} — no type discriminator, e.g. {@code members[]},
+     * {@code phoneNumbers[]}, extension scalars such as {@code urn:...:mobileNumbers}):
+     * <pre>
+     *   strategy            diff op  →  emitted ops
+     *   ELEMENT_DIFF        REPLACE  →  per-value Remove[value eq] + one aggregated Add (buildFlatMultivalueDiffOps)
+     *   (default)           ADD/DEL  →  single Add / Remove on the bare path
+     *   WHOLESALE_REPLACE   any      →  single Replace with the full final list
+     *                                   (REPLACE = values, ADD = dst ∪ new, DELETE = dst \ removed)
+     * </pre>
+     * ELEMENT_DIFF is required by Keycloak, which rejects a wholesale Replace on {@code group.members}
+     * with HTTP 501. WHOLESALE_REPLACE is required by WSO2 Asgardeo and WSO2 IS on flat <i>extension</i>
+     * multivalue paths (URN): they reject both {@code add} and unfiltered {@code remove} there and
+     * accept only {@code replace}. The setting is per task — do not mix Keycloak {@code group.members}
+     * (needs ELEMENT_DIFF) with extension flat attributes (need WHOLESALE_REPLACE) in the same task.
+     *
+     * <p><b>Compound selector paths</b> ({@code attr[selector]}, e.g. {@code emails[type eq "work"]}):
+     * <pre>
+     *   diff op   dst matches  new values  →  emitted ops
+     *   REPLACE   1            1           →  Replace canonical.subField
+     *   REPLACE   1            N           →  Remove canonical + Add baseName N elements
+     *   REPLACE   &gt; 1        *           →  element-level diff: precise Remove[selector and subField eq "X"]
+     *                                          per surplus + one targeted Add for net-new (buildElementLevelDiffOps)
+     *   REPLACE   0            *           →  Add baseName N elements
+     *   ADD       *            *           →  Add baseName N elements (never Replace)
+     *   DELETE    *            N&gt;0       →  N Remove ops, each selector AND-ed with subField eq value
+     *   DELETE    *            empty       →  Remove canonical (drops every match)
+     * </pre>
+     * A SCIM Replace on a valuePath rewrites <i>every</i> matching element (RFC 7644 §3.5.2.3), so the
+     * fast-path Replace is used only with exactly one match; multiple matches fall back to the
+     * element-level diff.
+     *
+     * <p><b>Known Keycloak limitation (deliberately not worked around):</b> when a single PATCH holds a
+     * {@code remove} positioned before an {@code add} on the same attribute, Keycloak silently drops the
+     * remove — even with a precise {@code subField eq "X"} filter (verified 2026-05-23). The element-level
+     * diff can thus leave a transient duplicate on Keycloak, reconciled on the next sync run. We do not
+     * reorder ops or split the PATCH to avoid it.
+     */
+    private List<ScimPathOperation> buildPatchOperations(String operation, LscDatasetModification diff, LscModifications lm) {
+        String attrName = diff.getAttributeName();
+        List<Object> values = diff.getValues();
+        boolean isRemove = diff.getOperation().equals(DELETE_VALUES);
+        boolean isReplace = diff.getOperation().equals(LscDatasetModification.LscDatasetModificationType.REPLACE_VALUES);
+        if (hasMultivalueSelector(attrName) && isRemove) {
+            String body = ScimSelector.extractBody(attrName);
+            String baseName = extractBaseName(attrName);
+            if (StringUtils.isBlank(body) && flatMultivalueStrategy == FlatMultivalueStrategyType.WHOLESALE_REPLACE) {
+                List<Object> remaining = subtractFlatDstValues(lm.getDestinationBean(), baseName, values);
+                String path = replaceAlias(baseName);
+                Serializable value = stringValuesToJsonValues(remaining);
+                LOGGER.debug("op: replace, path: {}, value: {}", path, value);
+                return List.of(new ScimPathOperation(OperationType.REPLACE.getName(), path, value));
+            }
+            if (StringUtils.isNotBlank(body) && values != null && !values.isEmpty()) {
+                String selectorFilter = ScimSelector.parse(body).toScimFilter();
+                String subField = extractSubField(attrName);
+                List<ScimPathOperation> ops = new ArrayList<>(values.size());
+                for (Object v : values) {
+                    String filter = selectorFilter + ScimSelector.AND_OPERATOR + subField + ScimSelector.EQ_OPERATOR + "\"" + escapeScimFilterString(v) + "\"";
+                    String removePath = replaceAlias(baseName + "[" + filter + "]");
+                    LOGGER.debug("op: remove, path: {}", removePath);
+                    ops.add(new ScimPathOperation(OperationType.REMOVE.getName(), removePath, null));
                 }
+                return ops;
             }
         }
-        LOGGER.debug("op: {}, name: {}, value: {}", diff.getOperation(), path, value);
-        return new ScimPathOperation(operation, path, (!operation.equals(OperationType.REMOVE.getName()))?value:null);
+        if (hasMultivalueSelector(attrName) && !isRemove) {
+            String baseName = extractBaseName(attrName);
+            String body = ScimSelector.extractBody(attrName);
+            if (StringUtils.isBlank(body)) {
+                if (flatMultivalueStrategy == FlatMultivalueStrategyType.WHOLESALE_REPLACE) {
+                    List<Object> finalValues = isReplace ? values : mergeFlatDstValues(lm.getDestinationBean(), baseName, values);
+                    String path = replaceAlias(baseName);
+                    Serializable value = stringValuesToJsonValues(finalValues);
+                    LOGGER.debug("op: replace, path: {}, value: {}", path, value);
+                    return List.of(new ScimPathOperation(OperationType.REPLACE.getName(), path, value));
+                }
+                if (isReplace) {
+                    return buildFlatMultivalueDiffOps(lm.getDestinationBean(), baseName, values);
+                }
+                String path = replaceAlias(baseName);
+                Serializable value = stringValuesToJsonValues(values);
+                LOGGER.debug("op: {}, path: {}, value: {}", diff.getOperation(), path, value);
+                return List.of(new ScimPathOperation(operation, path, value));
+            }
+            ScimSelector selector = ScimSelector.parse(body);
+            String canonicalKey = baseName + "[" + selector.toScimFilter() + "]";
+            String subField = extractSubField(attrName);
+            int dstMatchCount = countMatchingElements(lm.getDestinationBean(), canonicalKey);
+            boolean dstHasMatch = dstMatchCount > 0;
+            if (isReplace && values.size() == 1 && dstMatchCount == 1) {
+                String path = replaceAlias(canonicalKey + "." + subField);
+                Serializable value = String.valueOf(values.get(0));
+                LOGGER.debug("op: replace, path: {}, value: {}", path, value);
+                return List.of(new ScimPathOperation(OperationType.REPLACE.getName(), path, value));
+            }
+            if (isReplace && dstMatchCount > 1) {
+                List<ScimPathOperation> ops = buildElementLevelDiffOps(lm.getDestinationBean(), canonicalKey, baseName, selector, subField, values);
+                if (!ops.isEmpty()) {
+                    return ops;
+                }
+            }
+            ArrayList<Map<String, Object>> elements = new ArrayList<>();
+            for (Object v : values) {
+                Map<String, Object> element = selector.toElementMap();
+                element.put(subField, String.valueOf(v));
+                elements.add(element);
+            }
+            String addPath = replaceAlias(baseName);
+            ScimPathOperation addOp = new ScimPathOperation(OperationType.ADD.getName(), addPath, elements);
+            if (isReplace && dstHasMatch) {
+                ScimPathOperation removeOp = new ScimPathOperation(OperationType.REMOVE.getName(), replaceAlias(canonicalKey), null);
+                LOGGER.debug("op: remove+add, removePath: {}, addPath: {}, elements: {}", removeOp.getPath(), addPath, elements);
+                return List.of(removeOp, addOp);
+            }
+            LOGGER.debug("op: add, path: {}, elements: {}", addPath, elements);
+            return List.of(addOp);
+        }
+        String path = replaceAlias(canonicalizePath(attrName));
+        Serializable value = isRemove ? null : getFirstValueAsString(values);
+        LOGGER.debug("op: {}, path: {}, value: {}", diff.getOperation(), path, value);
+        return List.of(new ScimPathOperation(operation, path, value));
+    }
+
+    /**
+     * Computes the element-level delta between the dst values exposed under {@code canonicalKey}
+     * and the requested {@code values}, then materializes it as: one precise REMOVE op per
+     * surplus dst value (filter {@code baseName[selector and subField eq "X"]}) plus a single
+     * ADD op carrying every net-new value. Survivors already present in dst are left untouched.
+     */
+    private List<ScimPathOperation> buildElementLevelDiffOps(IBean dstBean, String canonicalKey,
+            String baseName, ScimSelector selector, String subField, List<Object> values) {
+        Set<Object> dstValues = dstBean != null
+                ? Optional.ofNullable(dstBean.getDatasetById(canonicalKey)).orElse(Set.of())
+                : Set.of();
+        List<String> dstStrValues = new ArrayList<>(dstValues.size());
+        for (Object v : dstValues) {
+            dstStrValues.add(String.valueOf(v));
+        }
+        List<String> newStrValues = new ArrayList<>(values.size());
+        for (Object v : values) {
+            newStrValues.add(String.valueOf(v));
+        }
+        List<ScimPathOperation> ops = new ArrayList<>();
+        String selectorFilter = selector.toScimFilter();
+        for (String v : dstStrValues) {
+            if (!newStrValues.contains(v)) {
+                String filter = selectorFilter + ScimSelector.AND_OPERATOR + subField + ScimSelector.EQ_OPERATOR + "\"" + escapeScimFilterString(v) + "\"";
+                String removePath = replaceAlias(baseName + "[" + filter + "]");
+                LOGGER.debug("op: remove, path: {}", removePath);
+                ops.add(new ScimPathOperation(OperationType.REMOVE.getName(), removePath, null));
+            }
+        }
+        ArrayList<Map<String, Object>> toAdd = new ArrayList<>();
+        for (String v : newStrValues) {
+            if (!dstStrValues.contains(v)) {
+                Map<String, Object> element = selector.toElementMap();
+                element.put(subField, v);
+                toAdd.add(element);
+            }
+        }
+        if (!toAdd.isEmpty()) {
+            String addPath = replaceAlias(baseName);
+            LOGGER.debug("op: add, path: {}, elements: {}", addPath, toAdd);
+            ops.add(new ScimPathOperation(OperationType.ADD.getName(), addPath, toAdd));
+        }
+        return ops;
+    }
+
+    /**
+     * Element-level delta for flat multivalue paths ({@code attr[]}, no type discriminator).
+     * Emits one REMOVE op per dst value missing from the requested set (filter
+     * {@code baseName[value eq "X"]}) plus a single ADD carrying every net-new value.
+     * Used in place of a wholesale REPLACE on the path, which is rejected by some SCIM
+     * stacks (Keycloak returns 501 {@code patch-REPLACE-operation not supported for group.members}).
+     *
+     * <p>Dst scalars are collected from both the flat {@code baseName[]} bucket and any
+     * selector-keyed bucket ({@code baseName[type eq "work"]}, etc.) — see
+     * {@link #collectFlatDstValues}. This keeps element-level diff usable even when the
+     * server adds a type discriminator to entries that were mapped flat on the source side.
+     *
+     * <p>Survivors already present in dst are left untouched, so audit logs and downstream
+     * listeners only see the actual delta.
+     */
+    private List<ScimPathOperation> buildFlatMultivalueDiffOps(IBean dstBean, String baseName, List<Object> values) {
+        Set<Object> dstValues = collectFlatDstValues(dstBean, baseName);
+        List<String> dstStr = new ArrayList<>(dstValues.size());
+        for (Object v : dstValues) {
+            dstStr.add(toComparableValue(v));
+        }
+        List<String> newStr = new ArrayList<>(values.size());
+        for (Object v : values) {
+            newStr.add(toComparableValue(v));
+        }
+        List<ScimPathOperation> ops = new ArrayList<>();
+        for (String v : dstStr) {
+            if (!newStr.contains(v)) {
+                String filter = ScimSelector.VALUE + ScimSelector.EQ_OPERATOR + "\"" + escapeScimFilterString(v) + "\"";
+                String removePath = replaceAlias(baseName + "[" + filter + "]");
+                LOGGER.debug("op: remove, path: {}", removePath);
+                ops.add(new ScimPathOperation(OperationType.REMOVE.getName(), removePath, null));
+            }
+        }
+        List<Object> toAdd = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++) {
+            if (!dstStr.contains(newStr.get(i))) {
+                toAdd.add(values.get(i));
+            }
+        }
+        if (!toAdd.isEmpty()) {
+            String addPath = replaceAlias(baseName);
+            Serializable addValue = stringValuesToJsonValues(toAdd);
+            LOGGER.debug("op: add, path: {}, value: {}", addPath, addValue);
+            ops.add(new ScimPathOperation(OperationType.ADD.getName(), addPath, addValue));
+        }
+        return ops;
+    }
+
+    /**
+     * Collects the dst scalar values for a flat multivalue attribute, walking both the
+     * canonical {@code baseName[]} bucket and any selector-keyed bare key
+     * ({@code baseName[type eq "work"]}) — the latter carries the SCIM element's
+     * {@code value} field after {@link #processFlatDiffs}. Sub-field keys
+     * ({@code baseName[selector].subAttr}) are skipped: they hold unrelated sub-fields,
+     * not the comparable scalar.
+     */
+    private Set<Object> collectFlatDstValues(IBean dstBean, String baseName) {
+        if (dstBean == null) {
+            return Set.of();
+        }
+        Set<Object> collected = new LinkedHashSet<>();
+        Set<Object> bare = dstBean.getDatasetById(baseName + "[]");
+        if (bare != null) {
+            collected.addAll(bare);
+        }
+        String prefix = baseName + "[";
+        for (String key : dstBean.getAttributesNames()) {
+            if (!key.startsWith(prefix) || key.equals(baseName + "[]")) {
+                continue;
+            }
+            if (key.indexOf(']') != key.length() - 1) {
+                continue;
+            }
+            Set<Object> vals = dstBean.getDatasetById(key);
+            if (vals != null) {
+                collected.addAll(vals);
+            }
+        }
+        return collected;
+    }
+
+    /**
+     * Merges the dst current values for a flat multivalue attribute with the requested
+     * new values, deduplicating by comparable scalar form. Used by the
+     * {@link FlatMultivalueStrategyType#WHOLESALE_REPLACE} strategy on {@code ADD_VALUES}:
+     * the resulting list is sent as a single SCIM PATCH {@code replace} op so that
+     * servers like Asgardeo (which reject {@code add} on extension flat paths) still
+     * receive a valid request.
+     */
+    private List<Object> mergeFlatDstValues(IBean dstBean, String baseName, List<Object> newValues) {
+        Set<Object> dstValues = collectFlatDstValues(dstBean, baseName);
+        LinkedHashMap<String, Object> merged = new LinkedHashMap<>();
+        for (Object v : dstValues) {
+            merged.putIfAbsent(toComparableValue(v), v);
+        }
+        if (newValues != null) {
+            for (Object v : newValues) {
+                merged.putIfAbsent(toComparableValue(v), v);
+            }
+        }
+        return new ArrayList<>(merged.values());
+    }
+
+    /**
+     * Subtracts the values to remove from the dst current values for a flat multivalue
+     * attribute, matching by comparable scalar form. Used by the
+     * {@link FlatMultivalueStrategyType#WHOLESALE_REPLACE} strategy on {@code DELETE_VALUES}
+     * to emit a single {@code replace} op carrying the surviving values — Asgardeo rejects
+     * wholesale {@code remove} without a selector filter.
+     */
+    private List<Object> subtractFlatDstValues(IBean dstBean, String baseName, List<Object> valuesToRemove) {
+        Set<Object> dstValues = collectFlatDstValues(dstBean, baseName);
+        if (dstValues.isEmpty()) {
+            return List.of();
+        }
+        Set<String> drop = new LinkedHashSet<>();
+        if (valuesToRemove != null) {
+            for (Object v : valuesToRemove) {
+                drop.add(toComparableValue(v));
+            }
+        }
+        List<Object> remaining = new ArrayList<>(dstValues.size());
+        for (Object v : dstValues) {
+            if (!drop.contains(toComparableValue(v))) {
+                remaining.add(v);
+            }
+        }
+        return remaining;
+    }
+
+    /**
+     * Normalizes a multivalue element to its comparable scalar form: if the value is a
+     * JSON object carrying a {@code value} field (e.g. {@code {"value":"uuid-1"}}),
+     * returns the {@code value} field's text; otherwise returns the raw string. Lets
+     * dst (already-extracted scalars from {@link #processFlatDiffs}) and src (often
+     * still wrapped {@code {value:...}} from LSC templating) be compared on equal terms.
+     */
+    private String toComparableValue(Object raw) {
+        String s = String.valueOf(raw);
+        if (s.length() > 1 && (s.charAt(0) == '{' || s.charAt(0) == '[')) {
+            try {
+                JsonNode node = mapper.readTree(s);
+                if (node != null && node.isObject() && node.has(ScimSelector.VALUE)) {
+                    return node.get(ScimSelector.VALUE).asText();
+                }
+            } catch (Exception ignore) {
+                // not JSON — fall through and treat as raw scalar
+            }
+        }
+        return s;
+    }
+
+    /** Escapes a string value for embedding inside a SCIM filter literal (RFC 7644 §3.4.2.2). */
+    private static String escapeScimFilterString(Object v) {
+        return String.valueOf(v).replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    /** Re-emits the selector inside [...] in canonical form (quoted strings, ordered clauses). */
+    private String canonicalizePath(String attributeName) {
+        if (!hasMultivalueSelector(attributeName)) {
+            return attributeName;
+        }
+        String base = extractBaseName(attributeName);
+        String body = ScimSelector.extractBody(attributeName);
+        String tail = StringUtils.substringAfter(attributeName, "]");
+        if (StringUtils.isBlank(body)) {
+            return base + "[]" + tail;
+        }
+        return base + "[" + ScimSelector.parse(body).toScimFilter() + "]" + tail;
     }
 
     public boolean delete(String pivotValue) throws LscServiceException {
@@ -447,7 +832,7 @@ public class ScimDao {
         return filter.map(f -> f + " and " + pivotFilter.toString()).orElse(pivotFilter.toString());
     }
     
-    private String getFirstValueAsString(List<Object> valuesList) {
+    private static String getFirstValueAsString(List<Object> valuesList) {
         return Optional.ofNullable(valuesList)
             .filter(values -> !values.isEmpty())
             .map(List::iterator)
@@ -461,30 +846,25 @@ public class ScimDao {
     }
     
     /**
-     * If the attribute is multivalued (the name contains square brackets) returns true.  
+     * Returns true if the flat attribute name carries a multivalue selector ({@code [...]}),
+     * either on the attribute itself ({@code emails[type eq work]}) or on an ancestor
+     * ({@code addresses[type eq work].streetAddress}). Does not imply that the leaf attribute
+     * is itself multivalued.
      */
-    private boolean isMultivaluedAttribute(String attributeName) {
+    private boolean hasMultivalueSelector(String attributeName) {
         return StringUtils.contains(attributeName, "[");
     }
 
     /**
-     * Returns the attribute name without square brackets  
+     * Returns the base attribute name preceding the first {@code [} (e.g. {@code addresses}
+     * for {@code addresses[type eq work].streetAddress}).
      */
-    private String getMultivaluedAttributeName(String attributeName) {
+    private String extractBaseName(String attributeName) {
         return StringUtils.substringBefore(attributeName, "[");
-    }    
-    
+    }
+
     /**
-     * Returns the path of the multivalued attribute (the value contained into square brackets).
-     * If the attribute is not multivalued, null is returned.
-     */
-    private String getMultivaluedAttributeIndex(String attributeName) {
-        Matcher m = MULTIVALUE_PATTERN.matcher(attributeName);
-        return m.find() ? m.group(1):null;
-    } 
-    
-    /**
-     * Converts a structured json string into a flat map. 
+     * Converts a structured json string into a flat map.
      * It also replaces aliases of extension schemas defined in the configuration file.
      */
     private Map<String, Object> flatten(String jsonAttributes) {
@@ -498,35 +878,113 @@ public class ScimDao {
     }
     
     /**
-     * Processes the flat map to obtain a single entry per type for each multivalued attribute
+     * Normalizes a flattened SCIM JSON map into a single entry per multivalued element,
+     * keyed by a canonical SCIM compound selector ({@code emails[type eq "home" and primary eq true]}).
+     *
+     * <p>Object-array entries ({@code emails[0].type}, {@code emails[0].value}, ...) are grouped
+     * by their numeric index and rewritten using {@link ScimSelector#fromFlatElement(Map)}.
+     * Object elements with no selector sub-attributes (only {@code value}) collapse into a
+     * primitive list under {@code attr[]}.
+     *
+     * <p>Each compound selector entry is additionally emitted under the user-supplied form
+     * declared in {@code writableAttributes} (when its canonicalization matches), so that
+     * non-canonical lookups by LSC's BeanComparator hit the same value.
      */
     private Map<String, Object> processFlatDiffs(Map<String, Object> flattenDiffs) {
-    	Map<String, Object> normalizedFlattenDiffs = (writableAttributes!=null)?normalizeArrayKeys(flattenDiffs):flattenDiffs;
-        List<String> types = normalizedFlattenDiffs.keySet().stream()
-                .filter(key -> ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "].")) || key.endsWith("]") )
-                .toList();
-        for (String key : types) {
-			String newKey = getMultivaluedAttributeName(key)+"[]";
-			if (key.endsWith("]") && !key.equals(newKey)) {
-				normalizedFlattenDiffs.put(getMultivaluedAttributeName(key)+"[]", normalizedFlattenDiffs.get(key));
-				normalizedFlattenDiffs.remove(key);
+        Map<String, Object> normalized = normalizeArrayKeys(flattenDiffs);
+        Map<String, Map<String, Object>> groups = new LinkedHashMap<>();
+        List<String> consumed = new ArrayList<>();
+        for (Entry<String, Object> entry : normalized.entrySet()) {
+            Matcher m = OBJECT_ARRAY_KEY.matcher(entry.getKey());
+            if (m.matches()) {
+                String groupKey = m.group(1) + "[" + m.group(2) + "]";
+                groups.computeIfAbsent(groupKey, k -> new LinkedHashMap<>()).put(m.group(3), entry.getValue());
+                consumed.add(entry.getKey());
             }
-        	if (ArrayUtils.contains(MULTIVALUE_ATTRS_SELECTORS, StringUtils.substringAfter(key, "]."))) {
-                String type = (String)normalizedFlattenDiffs.get(key);
-                String selector = StringUtils.substringAfter(key, "].");
-                String attrIndex = getMultivaluedAttributeIndex(key);
-                newKey = String.format("%s[%s%s%s]", getMultivaluedAttributeName(key), selector, EQ_OPERATOR, type);
-                String valueKey = String.format("%s[%s].%s", getMultivaluedAttributeName(key), attrIndex, VALUE_ATTRIBUTE);
-                if (!key.equals(newKey)) {
-	                normalizedFlattenDiffs.put(newKey, normalizedFlattenDiffs.get(valueKey));
-	                normalizedFlattenDiffs.remove(key);
-	                normalizedFlattenDiffs.remove(valueKey);	                	
-                }
-        	}
         }
-        return normalizedFlattenDiffs;
+        consumed.forEach(normalized::remove);
+        for (Entry<String, Map<String, Object>> group : groups.entrySet()) {
+            String baseName = StringUtils.substringBefore(group.getKey(), "[");
+            Map<String, Object> sub = group.getValue();
+            Object value = sub.get(ScimSelector.VALUE);
+            ScimSelector selector = ScimSelector.fromFlatElement(sub);
+            if (selector.isEmpty()) {
+                String key = baseName + "[]";
+                List<Object> list = (List<Object>) normalized.computeIfAbsent(key, k -> new ArrayList<>());
+                if (value != null) {
+                    list.add(value);
+                }
+            } else {
+                String canonicalKey = baseName + "[" + selector.toScimFilter() + "]";
+                // Backward-compat: expose the value field directly under the selector key
+                // (so existing datasets like emails[type eq "work"] continue to resolve).
+                if (value != null) {
+                    accumulate(normalized, canonicalKey, value);
+                    String userForm = findWritableUserForm(canonicalKey);
+                    if (userForm != null && !userForm.equals(canonicalKey)) {
+                        accumulate(normalized, userForm, value);
+                    }
+                }
+                // Per-sub-attribute keys (canonicalKey.subField) for every field that is
+                // not part of the selector clauses — supports addresses[type eq "work"].streetAddress
+                // and similar structured sub-fields.
+                for (Map.Entry<String, Object> e : sub.entrySet()) {
+                    String subAttr = e.getKey();
+                    if (selector.has(subAttr)) {
+                        continue;
+                    }
+                    String subKey = canonicalKey + "." + subAttr;
+                    accumulate(normalized, subKey, e.getValue());
+                    String userSubForm = findWritableUserForm(subKey);
+                    if (userSubForm != null && !userSubForm.equals(subKey)) {
+                        accumulate(normalized, userSubForm, e.getValue());
+                    }
+                }
+            }
+        }
+        return normalized;
     }
-    
+
+    /**
+     * Accumulates a value under {@code key}: if absent stores the value directly; if a single
+     * value is already there promotes to a list and appends; if a list is already there
+     * appends to it. Null values are skipped.
+     */
+    private static void accumulate(Map<String, Object> map, String key, Object value) {
+        if (value == null) {
+            map.putIfAbsent(key, null);
+            return;
+        }
+        Object existing = map.get(key);
+        if (existing == null) {
+            map.put(key, value);
+        } else if (existing instanceof List) {
+            ((List<Object>) existing).add(value);
+        } else {
+            List<Object> list = new ArrayList<>();
+            list.add(existing);
+            list.add(value);
+            map.put(key, list);
+        }
+    }
+
+    /**
+     * Returns the writableAttributes entry whose canonicalization equals {@code canonicalKey},
+     * or {@code null} if none. Used to alias the dst bean under the user-written form so
+     * non-canonical writableAttributes still resolve at lookup time.
+     */
+    private String findWritableUserForm(String canonicalKey) {
+        if (writableAttributes == null) {
+            return null;
+        }
+        for (String w : writableAttributes) {
+            if (canonicalizePath(w).equals(canonicalKey)) {
+                return w;
+            }
+        }
+        return null;
+    }
+
     /**
      * Normalizes the keys of the provided map based on the configured writable attributes
      * <p>
@@ -536,12 +994,13 @@ public class ScimDao {
      * </p>
      */
     private Map<String, Object> normalizeArrayKeys(Map<String, Object> flattenDiffs) {
-    	Map<String, Object> updatedMap = new HashMap<>();
+    	Map<String, Object> updatedMap = new LinkedHashMap<>();
     	for (Map.Entry<String, Object> entry: flattenDiffs.entrySet()) {
     		String arrayKey = entry.getKey()+"[]";
-    		boolean isArray = writableAttributes.contains(arrayKey);
+    		boolean isArray = entry.getValue() instanceof ArrayList
+    				|| (writableAttributes != null && writableAttributes.contains(arrayKey));
     		updatedMap.put(isArray?arrayKey:entry.getKey(), entry.getValue());
-		} 	
+		}
     	return updatedMap;
     }
     
@@ -581,9 +1040,29 @@ public class ScimDao {
         return result;
     }
     
-    private boolean hasValue(IBean bean, String attrName) {
-        Set<Object> currentDestValue = bean.getDatasetById(attrName);
-        return (currentDestValue!=null && !currentDestValue.isEmpty());
+    /**
+     * Lower-bound count of dst elements matching the given selector, derived from the
+     * widest dataset cardinality found under {@code canonicalKey} (bare key for elements
+     * with a {@code value} field, or any {@code canonicalKey.subField} entry). Used to
+     * decide whether a SCIM Replace on a valuePath is safe (single match) or would
+     * affect multiple records (must fall back to Remove+Add).
+     */
+    private int countMatchingElements(IBean bean, String canonicalKey) {
+        if (bean == null) {
+            return 0;
+        }
+        Set<Object> direct = bean.getDatasetById(canonicalKey);
+        int max = direct != null ? direct.size() : 0;
+        String prefix = canonicalKey + ".";
+        for (String key : bean.getAttributesNames()) {
+            if (key.startsWith(prefix)) {
+                Set<Object> sub = bean.getDatasetById(key);
+                if (sub != null && sub.size() > max) {
+                    max = sub.size();
+                }
+            }
+        }
+        return max;
     }
     
     private ArrayList<Object> stringValuesToJsonValues(List<Object> stringValues) {
