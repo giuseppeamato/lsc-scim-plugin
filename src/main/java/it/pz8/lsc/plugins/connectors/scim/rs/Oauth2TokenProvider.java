@@ -43,8 +43,12 @@ public class Oauth2TokenProvider implements TokenProvider {
         if (!isTokenExpired()) {
             return currentToken.get().getValue();
         }
-        refreshToken();
-        return currentToken.get().getValue();
+        synchronized (this) {
+            if (isTokenExpired()) {
+                refreshToken();
+            }
+            return currentToken.get().getValue();
+        }
     }
     
     private boolean isTokenExpired() {
@@ -63,7 +67,7 @@ public class Oauth2TokenProvider implements TokenProvider {
 	        if (response.indicatesSuccess()) {
 	        	LOGGER.debug("Token received.");
 	        	AccessTokenResponse successResponse = response.toSuccessResponse();
-	            currentToken.compareAndSet(currentToken.get(), successResponse.getTokens().getAccessToken());
+	            currentToken.set(successResponse.getTokens().getAccessToken());
 	        	tokenObtainedTime = System.currentTimeMillis() / 1000;
 	        } else {
 	            HTTPResponse errorResponse = response.toHTTPResponse();            
