@@ -10,8 +10,8 @@
 	<select id="getGroupOfNames" resultClass="java.util.HashMap" parameterClass="java.util.Map">
 		Select
 			'groupOfNames' objectClass,
-			TRIM(id) as id,
-			TRIM(label) as displayname
+			TRIM(label) as displayname,
+			TRIM(members) as members
 		FROM roles
 		WHERE id = #id#
 	</select>
@@ -30,6 +30,12 @@
 		DELETE FROM roles 
 		WHERE id = #id#
 	</delete>
+
+	<select id="getGroupOfNamesClean" resultClass="java.util.HashMap" parameterClass="java.util.Map">
+		select id 
+		FROM roles
+		WHERE id = #id#
+	</select>
 
 </sqlMap>
 

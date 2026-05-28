@@ -6,6 +6,7 @@ CREATE TABLE users (
 	email varchar(50),
 	workemail varchar(50),
 	address varchar(50),
+    city varchar(250),
 	department varchar(50),
 	phonenumbers varchar(50),
 	roles varchar(1000),

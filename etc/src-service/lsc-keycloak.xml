@@ -1,0 +1,148 @@
+<?xml version="1.0" ?>
+<lsc xmlns="http://lsc-project.org/XSD/lsc-core-2.2.xsd" 
+    xmlns:scim="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd"
+    revision="0">
+    <connections>
+        <pluginConnection>
+            <name>scim-src-conn</name>
+			<url>http://localhost:8100/realms/myrealm/scim/v2</url>
+            <username></username>
+            <password></password>
+			<scim:oauth2ConnectionSettings>
+                <scim:tokenURL>http://localhost:8100/realms/myrealm/protocol/openid-connect/token</scim:tokenURL>
+				<scim:scope></scim:scope>
+				<scim:clientId>scim-client</scim:clientId>				
+				<scim:clientSecret>${KEYCLOAK_CLIENT_SECRET}</scim:clientSecret>
+            </scim:oauth2ConnectionSettings>
+		</pluginConnection>
+        <databaseConnection>
+            <name>jdbc-dst-conn</name>
+            <url>jdbc:postgresql://localhost:5432/test</url>
+            <username>postgres</username>
+            <password>postgres</password>
+            <driver>org.postgresql.Driver</driver>
+        </databaseConnection>
+    </connections>
+    <tasks>
+        <task>
+           <name>Users</name>
+           <bean>org.lsc.beans.SimpleBean</bean>
+           <pluginSourceService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimSrcService">
+                <name>scim-users-source-service</name>
+                <connection reference="scim-src-conn" />
+                <scim:scimServiceSettings>
+                    <name>scim-usr-src-service-settings</name>
+                    <connection reference="scim-src-conn" />
+                    <scim:entity>Users</scim:entity>
+                    <scim:schema>
+                        <scim:namespace>
+                            <scim:alias>ENTERPRISE_USER_SCHEMA</scim:alias>
+                            <scim:uri>urn:ietf:params:scim:schemas:extension:enterprise:2.0:User</scim:uri>
+                        </scim:namespace>
+                    </scim:schema>
+                    <scim:writableAttributes>
+                        <string>userName</string>
+                        <string>name.givenName</string>
+                        <string>name.familyName</string>
+                        <string>ENTERPRISE_USER_SCHEMA.department</string>
+						<string>emails[primary eq true]</string>
+						<string>phoneNumbers[type eq work]</string>
+						<string>addresses[type eq work].streetAddress</string>
+						<string>addresses[type eq work].locality</string>
+					</scim:writableAttributes>
+                </scim:scimServiceSettings>
+            </pluginSourceService>
+            <databaseDestinationService>
+                <name>jdbc-dst-service</name>
+                <connection reference="jdbc-dst-conn" />
+                <requestNameForList>getInetOrgPersonList</requestNameForList>
+                <requestNameForObject>getInetOrgPerson</requestNameForObject>
+                <requestsNameForInsert><string>insertInetOrgPerson</string></requestsNameForInsert>
+                <requestsNameForUpdate><string>updateInetOrgPerson</string></requestsNameForUpdate>
+                <requestsNameForDelete><string>deleteInetOrgPerson</string></requestsNameForDelete>
+            </databaseDestinationService>
+            <propertiesBasedSyncOptions>
+                <mainIdentifier>srcBean.getDatasetFirstValueById("id")</mainIdentifier>
+                <defaultDelimiter>;</defaultDelimiter>
+                <defaultPolicy>FORCE</defaultPolicy>                
+                <conditions>
+                    <create>true</create>
+                    <update>true</update>
+                    <delete>true</delete>
+                    <changeId>false</changeId>
+                </conditions>
+                <dataset>
+                    <name>id</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("id")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>username</name>
+                    <forceValues> 
+                        <string>srcBean.getDatasetFirstValueById("userName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>givenname</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("name.givenName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>sn</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("name.familyName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>mail</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("emails[primary eq true]")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>phonenumbers</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("phoneNumbers[type eq work]")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>address</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("addresses[type eq work].streetAddress")</string>
+                    </forceValues>                    
+                </dataset>
+                <dataset>
+                    <name>city</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("addresses[type eq work].locality")</string>
+                    </forceValues>
+				</dataset>
+                <dataset>
+                    <name>department</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("ENTERPRISE_USER_SCHEMA.department")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>roles</name>
+                    <forceValues>
+                        <string>
+                            <![CDATA[
+                                var memberOf = '';
+                                srcBean.getAttributesNames().forEach(function(entry) {
+									var m = entry.match(/^groups\[[^\]]*display eq "([^"]*)"[^\]]*\]$/);
+									if (m) {
+										memberOf = memberOf + m[1] + ",";
+									}
+                                });
+                                memberOf.slice(0, -1)
+                            ]]>          
+                        </string>
+                    </forceValues>
+                </dataset>
+            </propertiesBasedSyncOptions>
+        </task>
+    </tasks>
+</lsc>

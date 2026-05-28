@@ -1,0 +1,315 @@
+<?xml version="1.0" ?>
+<lsc xmlns="http://lsc-project.org/XSD/lsc-core-2.2.xsd" 
+    xmlns:scim="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd"
+    revision="0">
+    <connections>
+        <ldapConnection>
+            <name>ldap-src-conn</name>
+            <url>ldap://localhost:10389/dc=example,dc=com</url>
+            <username>uid=admin,ou=system</username>
+            <password>secret</password>
+            <authentication>SIMPLE</authentication>
+            <referral>IGNORE</referral>
+            <derefAliases>NEVER</derefAliases>
+            <version>VERSION_3</version>
+            <pageSize>1000</pageSize>
+            <factory>com.sun.jndi.ldap.LdapCtxFactory</factory>
+            <tlsActivated>false</tlsActivated>
+        </ldapConnection>
+        <pluginConnection>
+            <name>scim-dst-conn</name>
+			<url>https://localhost:9443/scim2</url>
+            <username>admin</username>
+            <password>admin</password>
+		</pluginConnection>
+        <databaseConnection>
+			<name>scim-cache-conn</name>
+            <url>jdbc:h2:file:./data/scim2mapping</url>
+			<!--
+			<url>jdbc:h2:mem:scim2mapping;DB_CLOSE_DELAY=-1</url>
+			-->
+            <username>sa</username>
+            <password>admin</password>
+            <driver>org.h2.Driver</driver>
+        </databaseConnection>
+    </connections>
+    <tasks>
+        <task>
+            <name>Users</name>
+            <bean>org.lsc.beans.SimpleBean</bean>
+            <ldapSourceService>
+                <name>ldap-src-usr-service</name>
+                <connection reference="ldap-src-conn" />
+                <baseDn>ou=users,dc=example,dc=com</baseDn>
+                <pivotAttributes>
+                    <string>uid</string>
+					<string>entryDN</string>
+                </pivotAttributes>
+                <fetchedAttributes>
+                    <string>objectClass</string>
+                    <string>uid</string>
+					<string>entryDN</string>
+                    <string>givenName</string>
+                    <string>sn</string>
+                    <string>mail</string>         
+                    <string>email</string>         
+                    <string>departmentNumber</string>         
+                    <string>telephoneNumber</string>
+                </fetchedAttributes>
+                <getAllFilter>(objectClass=inetOrgPerson)</getAllFilter>
+                <getOneFilter>(&amp;(objectClass=inetOrgPerson)(uid={uid}))</getOneFilter>
+                <cleanFilter>(&amp;(objectClass=inetOrgPerson)(uid={username}))</cleanFilter>
+            </ldapSourceService>
+            <pluginDestinationService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimDstService">
+                <name>scim-users-dst-service</name>
+                <connection reference="scim-dst-conn" />
+                <scim:scimServiceSettings>
+                    <name>scim-usr-dst-service-settings</name>
+                    <connection reference="scim-dst-conn" />
+                    <scim:entity>Users</scim:entity>
+                    <scim:pivot>userName</scim:pivot>
+					<scim:sourcePivot>uid</scim:sourcePivot>
+					<scim:sourceUUID>entryDN</scim:sourceUUID>
+					<scim:cacheConnection reference="scim-cache-conn" writeEnabled="true" />
+                    <scim:schema>
+                        <scim:namespace>
+                            <scim:alias>IDENTITY_USER_SCHEMA</scim:alias>
+                            <scim:uri>urn:scim:wso2:schema</scim:uri>
+                        </scim:namespace>
+                        <scim:namespace>
+                            <scim:alias>ENTERPRISE_USER_SCHEMA</scim:alias>
+                            <scim:uri>urn:ietf:params:scim:schemas:extension:enterprise:2.0:User</scim:uri>
+                        </scim:namespace>
+                        <scim:namespace>
+                            <scim:alias>CUSTOM_USER_SCHEMA</scim:alias>
+                            <scim:uri>urn:scim:schemas:extension:custom:User</scim:uri>
+                        </scim:namespace>
+                    </scim:schema>
+					<scim:flatMultivalueStrategy>WHOLESALE_REPLACE</scim:flatMultivalueStrategy>
+                    <scim:writableAttributes>
+                        <string>userName</string>
+                        <string>password</string>
+   						<string>IDENTITY_USER_SCHEMA.askPassword</string>
+                        <string>name.givenName</string>
+                        <string>name.familyName</string>
+                        <string>ENTERPRISE_USER_SCHEMA.department</string>
+                        <string>emails[]</string>
+						<string>IDENTITY_USER_SCHEMA.mobileNumbers[]</string>
+                    </scim:writableAttributes>
+                </scim:scimServiceSettings>
+            </pluginDestinationService>
+            <propertiesBasedSyncOptions>
+                <mainIdentifier>srcBean.getDatasetFirstValueById("uid")</mainIdentifier>
+                <defaultDelimiter>;</defaultDelimiter>
+                <defaultPolicy>FORCE</defaultPolicy>
+				<conditions>
+                    <create>true</create>
+                    <update>
+						<![CDATA[
+						var changed = false;
+
+						// Attributi singolo valore: [srcAttr, dstAttr]
+						var singleAttrs = [
+							["givenName",        "name.givenName"],
+							["sn",               "name.familyName"],
+							["departmentNumber", "ENTERPRISE_USER_SCHEMA.department"]
+						];
+						for (var i = 0; i < singleAttrs.length && !changed; i++) {
+							var s = srcBean.getDatasetFirstValueById(singleAttrs[i][0]);
+							var d = dstBean.getDatasetFirstValueById(singleAttrs[i][1]);
+							s = (s == null) ? "" : s.toString().trim();
+							d = (d == null) ? "" : d.toString().trim();
+							if (s !== d) changed = true;
+						}
+
+						// Attributi multivalore: [srcAttr, dstAttr]
+						if (!changed) {
+							var multiAttrs = [
+								["mail",         "emails[]"],
+								["telephoneNumber", "IDENTITY_USER_SCHEMA.mobileNumbers[]"]
+							];
+							for (var j = 0; j < multiAttrs.length && !changed; j++) {
+								var srcVals = srcBean.getDatasetValuesById(multiAttrs[j][0]);
+								var dstVals = dstBean.getDatasetValuesById(multiAttrs[j][1]);
+								var s = (srcVals != null) ? srcVals.toArray() : [];
+								var d = (dstVals != null) ? dstVals.toArray() : [];
+								if (s.length !== d.length) {
+									changed = true;
+								} else {
+									var sStr = [], dStr = [];
+									for (var k = 0; k < s.length; k++) sStr.push(s[k].toString());
+									for (var k = 0; k < d.length; k++) dStr.push(d[k].toString());
+									sStr.sort(); dStr.sort();
+									for (var k = 0; k < sStr.length && !changed; k++) {
+										if (sStr[k] !== dStr[k]) changed = true;
+									}
+								}
+							}
+						}
+						changed
+						]]>
+					</update>
+                    <delete>true</delete>
+                    <changeId>false</changeId>
+                </conditions>
+                <dataset>
+                    <name>userName</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("uid")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>password</name>
+                    <policy>FORCE</policy>
+                    <createValues>
+						<string>
+							<![CDATA["Temp!" + java.util.UUID.randomUUID().toString().substring(0,8);]]>
+						</string>
+                    </createValues>
+                </dataset>
+                <dataset>
+                    <name>IDENTITY_USER_SCHEMA.askPassword</name>
+					<policy>FORCE</policy>
+                    <createValues>
+                        <string>"true"</string>          
+                    </createValues>
+                </dataset>
+                <dataset>
+                    <name>name.givenName</name>                    
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("givenName")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>name.familyName</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("sn")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>emails[]</name>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("mail")</string>
+                    </forceValues>                    
+                </dataset>
+                <dataset>
+                    <name>ENTERPRISE_USER_SCHEMA.department</name>                    
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("departmentNumber")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>IDENTITY_USER_SCHEMA.mobileNumbers[]</name>
+                    <forceValues>
+                        <string>
+                            <![CDATA[
+                                var srcPhones = srcBean.getDatasetValuesById("telephoneNumber");
+                                var dstPhones = [];
+                                for  (var i=0; i<srcPhones.size(); i++) {
+									dstPhones.push(srcPhones.get(i));
+                                }
+                                (dstPhones.length==0)?[""]:dstPhones
+                            ]]>
+                        </string>
+                    </forceValues>
+                </dataset>
+            </propertiesBasedSyncOptions>            
+        </task>
+        <task>
+            <name>Groups</name>
+            <bean>org.lsc.beans.SimpleBean</bean>
+            <ldapSourceService>
+                <name>ldap-src-grp-service</name>
+                <connection reference="ldap-src-conn" />
+                <baseDn>ou=groups,dc=example,dc=com</baseDn>
+                <pivotAttributes>
+                    <string>cn</string>
+                </pivotAttributes>
+                <fetchedAttributes>
+                    <string>objectClass</string>
+                    <string>cn</string>
+                    <string>member</string>
+                </fetchedAttributes>
+                <getAllFilter>(&amp;(objectClass=groupOfNames))</getAllFilter>
+                <getOneFilter>(&amp;(objectClass=groupOfNames)(cn={cn}))</getOneFilter>
+                <cleanFilter>(&amp;(objectClass=groupOfNames)(cn={displayname}))</cleanFilter>
+            </ldapSourceService>
+            <pluginDestinationService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimDstService">
+                <name>scim-groups-dst-service</name>
+                <connection reference="scim-dst-conn" />
+                <scim:scimServiceSettings>
+                    <name>scim-grp-dst-service-settings</name>
+                    <connection reference="scim-dst-conn" /> 
+                    <scim:entity>Groups</scim:entity>
+                    <scim:pivot>displayName</scim:pivot>
+					<scim:sourcePivot>cn</scim:sourcePivot>
+					<scim:cacheConnection reference="scim-cache-conn" writeEnabled="false" />
+                    <scim:domain>PRIMARY</scim:domain>
+                    <scim:writableAttributes>
+                        <string>displayName</string>
+                        <string>members[]</string>
+                    </scim:writableAttributes>
+                </scim:scimServiceSettings>
+            </pluginDestinationService>
+            <propertiesBasedSyncOptions>
+                <mainIdentifier>srcBean.getDatasetFirstValueById("cn")</mainIdentifier>
+                <defaultDelimiter>;</defaultDelimiter>
+                <defaultPolicy>FORCE</defaultPolicy>
+                <conditions>
+                    <create>true</create>
+                    <update>
+                        <![CDATA[
+                            var membersSrcDn = srcBean.getDatasetValuesById("member");
+                            var membersSrc = [];
+                            for  (var i=0; i<membersSrcDn.size(); i++) {
+                                membersSrc.push(membersSrcDn[i].substring(4,membersSrcDn[i].indexOf(",")));
+                            }                            
+                            var membersDstDn = dstBean.getAttributesNames().toArray();
+                            var membersDst = [];
+                            for  (var i=0; i<membersDstDn.length; i++) {
+								if (/^members\[display eq "[^"]*"\]\.value$/.test(membersDstDn[i])) {
+                                    membersDst.push(JSON.parse(membersDstDn[i].substring("members[display eq ".length,membersDstDn[i].indexOf("]"))));
+                                }
+                            }
+                            membersDst = membersDst.sort();
+                            var is_same = (membersSrc.length == membersDst.length) && membersSrc.sort().every(function(element, index) {
+                                return element === membersDst[index]; 
+                            });
+                            !is_same
+                        ]]>    
+                    </update>
+                    <delete>true</delete>
+                    <changeId>false</changeId>
+                </conditions>
+                <dataset>
+                    <name>displayName</name>
+                    <policy>KEEP</policy>
+                    <forceValues>
+                        <string>srcBean.getDatasetFirstValueById("cn")</string>
+                    </forceValues>
+                </dataset>
+                <dataset>
+                    <name>members[]</name>
+                    <forceValues>
+                        <string>
+                            <![CDATA[
+                                var membersSrcDn = srcBean.getDatasetValuesById("member");
+								var scimUtils = Java.type("it.pz8.lsc.plugins.connectors.scim.utils.ScimUtils");
+                                var membersDstDn = [];
+                                for  (var i=0; i<membersSrcDn.size(); i++) {
+                                    var memberSrcDn = membersSrcDn.get(i);
+									var cachedData = scimUtils.getCachedDataByUUID(memberSrcDn, "Users");
+                                    var uid = memberSrcDn.substring(4,memberSrcDn.indexOf(","));
+									
+                                    obj = JSON.stringify({display: uid, value: cachedData.getScimId()});
+                                    membersDstDn.push(obj);
+                                }
+                                (membersDstDn.length==0)?[""]:membersDstDn
+                            ]]>
+                        </string>
+                    </forceValues>
+                </dataset>
+            </propertiesBasedSyncOptions>            
+        </task>
+    </tasks>
+</lsc>
