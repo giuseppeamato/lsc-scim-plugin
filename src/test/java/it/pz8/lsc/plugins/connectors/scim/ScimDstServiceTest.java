@@ -171,7 +171,7 @@ class ScimDstServiceTest {
 
     @Test
     @Order(4)
-    void addUser() throws LscServiceException {
+    void addUser() throws LscServiceException, NamingException {
         testDstService = new ScimDstService(task);
         LscModifications lm = new LscModifications(LscModificationType.CREATE_OBJECT);
         lm.setMainIdentifer("pippo");
@@ -180,7 +180,7 @@ class ScimDstServiceTest {
         LscDatasetModification firstname = new LscDatasetModification(ADD_VALUES, "name.givenName", List.of("Pippo"));
         LscDatasetModification lastname = new LscDatasetModification(ADD_VALUES, "name.familyName", List.of("Pezzotto"));
         LscDatasetModification email = new LscDatasetModification(ADD_VALUES, "emails[]", List.of("pippo@localhost.com"));
-        LscDatasetModification workemail = new LscDatasetModification(ADD_VALUES, "emails[type eq work]", List.of("pippo@acme.com"));
+        LscDatasetModification workemail = new LscDatasetModification(ADD_VALUES, "emails[type eq \"work\"]", List.of("pippo@acme.com"));
         lm.setLscAttributeModifications(List.of(username, password, firstname, lastname, email, workemail));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
@@ -218,12 +218,12 @@ class ScimDstServiceTest {
         LscModifications lm = new LscModifications(LscModificationType.UPDATE_OBJECT);
         lm.setMainIdentifer("pippo");
         lm.setDestinationBean(destinationBean);
-        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[type eq work]", List.of("dev@acme.com"));
+        LscDatasetModification datasetModification = new LscDatasetModification(LscDatasetModificationType.REPLACE_VALUES, "emails[type eq \"work\"]", List.of("dev@acme.com"));
         lm.setLscAttributeModifications(List.of(datasetModification));
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("emails[type eq work]")).isEqualTo("dev@acme.com");        
+        assertThat(bean.getDatasetFirstValueById("emails[type eq \"work\"]")).isEqualTo("dev@acme.com");
     }
 
     @Test
@@ -241,7 +241,7 @@ class ScimDstServiceTest {
         boolean result = testDstService.apply(lm);
         assertThat(result).isTrue();
         IBean bean = testDstService.getBean("pippo", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("emails")).isEqualTo("other@localhost.com");        
+        assertThat(bean.getDatasetFirstValueById("emails[]")).isEqualTo("other@localhost.com");        
     }
 
     @Test
@@ -425,7 +425,7 @@ class ScimDstServiceTest {
         LscDatasets lscDatasets = new LscDatasets();
         lscDatasets.put("cn", "developer");
         IBean bean = testDstService.getBean("developer", lscDatasets, true);
-        assertThat(bean.getDatasetFirstValueById("members[display eq admin]")).isNotNull();
+        assertThat(bean.getDatasetFirstValueById("members[display eq \"admin\"]")).isNotNull();
     }
 
     @Test
