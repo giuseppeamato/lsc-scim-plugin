@@ -31,11 +31,5 @@
 		WHERE id = #id#
 	</delete>
 
-	<select id="getGroupOfNamesClean" resultClass="java.util.HashMap" parameterClass="java.util.Map">
-		select id 
-		FROM roles
-		WHERE id = #id#
-	</select>
-
 </sqlMap>
 
