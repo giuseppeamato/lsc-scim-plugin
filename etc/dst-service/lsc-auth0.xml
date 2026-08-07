@@ -52,9 +52,9 @@
 					<string>homePostalAddress</string>
 					<string>l</string>
                 </fetchedAttributes>
-                <getAllFilter>(objectClass=inetOrgPerson)</getAllFilter>
-                <getOneFilter>(&amp;(objectClass=inetOrgPerson)(uid={uid}))</getOneFilter>
-                <cleanFilter>(&amp;(objectClass=inetOrgPerson)(uid={userName}))</cleanFilter>
+                <allEntriesFilter>"(objectClass=inetOrgPerson)"</allEntriesFilter>
+                <oneEntryFilter>"(&amp;(objectClass=inetOrgPerson)(uid=" + pivotAttributes["uid"] + "))"</oneEntryFilter>
+                <cleanEntryFilter>"(&amp;(objectClass=inetOrgPerson)(uid=" + pivotAttributes["username"] + "))"</cleanEntryFilter>
             </ldapSourceService>
             <pluginDestinationService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimDstService">
                 <name>scim-users-dst-service</name>

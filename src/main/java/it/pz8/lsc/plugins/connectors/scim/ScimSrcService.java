@@ -19,6 +19,7 @@ import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.lsc.LscDatasets;
+import org.lsc.Task;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.ConnectionType;
 import org.lsc.configuration.PluginConnectionType;
@@ -66,7 +67,7 @@ public class ScimSrcService implements IService {
     }
 
     @Override
-    public Map<String, LscDatasets> getListPivots() throws LscServiceException {
+    public Map<String, LscDatasets> getListPivots(Task task) throws LscServiceException {
         LOGGER.debug("Call to Source getListPivots");
         try {
             return dao.getList();
@@ -76,7 +77,7 @@ public class ScimSrcService implements IService {
     }
 
     @Override
-    public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
+    public IBean getBean(Task task, String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
     	LOGGER.debug("Call to getBean({}, {}, {})", pivotRawValue, lscDatasets, fromSameService);
         if (lscDatasets.getAttributesNames().isEmpty()) {
             return null;

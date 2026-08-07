@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	xmlns="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd" targetNamespace="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd"
-	elementFormDefault="qualified" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
-	xmlns:lsc="http://lsc-project.org/XSD/lsc-core-2.2.xsd" jaxb:version="2.0">
 
-	<xsd:import namespace="http://lsc-project.org/XSD/lsc-core-2.2.xsd" schemaLocation="lsc-core-2.2.xsd" />
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd"
+        targetNamespace="http://lsc-project.org/XSD/lsc-scim-plugin-1.2.xsd"
+        elementFormDefault="qualified"
+        xmlns:jaxb="https://jakarta.ee/xml/ns/jaxb"
+        jaxb:version="3.0"
+        xmlns:annox="urn:jaxb.jvnet.org:annox"
+        xmlns:lsc="http://lsc-project.org/XSD/lsc-core-2.3.xsd"
+        jaxb:extensionBindingPrefixes="annox">
+
+        <xsd:import namespace="http://lsc-project.org/XSD/lsc-core-2.3.xsd" schemaLocation="lsc-core-2.3.xsd" />
 
 	<xsd:element name="oauth2ConnectionSettings">
 		<xsd:complexType>
