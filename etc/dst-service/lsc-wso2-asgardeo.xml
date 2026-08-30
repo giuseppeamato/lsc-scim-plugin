@@ -62,9 +62,9 @@
                     <string>departmentNumber</string>  
                     <string>telephoneNumber</string>
                 </fetchedAttributes>
-                <getAllFilter>(objectClass=inetOrgPerson)</getAllFilter>
-                <getOneFilter>(&amp;(objectClass=inetOrgPerson)(mail={mail}))</getOneFilter>
-                <cleanFilter>(&amp;(objectClass=inetOrgPerson)(mail={userNameWithoutDomain}))</cleanFilter>
+                <allEntriesFilter>"(objectClass=inetOrgPerson)"</allEntriesFilter>
+                <oneEntryFilter>"(&amp;(objectClass=inetOrgPerson)(mail="+ pivotAttributes["mail"] +"))"</oneEntryFilter>
+                <cleanEntryFilter>"(&amp;(objectClass=inetOrgPerson)(mail="+ pivotAttributes["usernamewithoutdomain"] +"))"</cleanEntryFilter>
             </ldapSourceService>
             <pluginDestinationService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimDstService">
                 <name>scim-users-dst-service</name>
@@ -194,9 +194,9 @@
                     <string>cn</string>
                     <string>member</string>
                 </fetchedAttributes>
-                <getAllFilter>(&amp;(objectClass=groupOfNames))</getAllFilter>
-                <getOneFilter>(&amp;(objectClass=groupOfNames)(cn={cn}))</getOneFilter>
-                <cleanFilter>(&amp;(objectClass=groupOfNames)(cn={cnWithoutDomain}))</cleanFilter>
+                <allEntriesFilter>"(&amp;(objectClass=groupOfNames))"</allEntriesFilter>
+                <oneEntryFilter>"(&amp;(objectClass=groupOfNames)(cn="+ pivotAttributes["cn"] +"))"</oneEntryFilter>
+                <cleanEntryFilter>"(&amp;(objectClass=groupOfNames)(cn="+ pivotAttributes["cnwithoutdomain"] +"))"</cleanEntryFilter>
             </ldapSourceService>
             <pluginDestinationService implementationClass="it.pz8.lsc.plugins.connectors.scim.ScimDstService">
                 <name>scim-groups-dst-service</name>

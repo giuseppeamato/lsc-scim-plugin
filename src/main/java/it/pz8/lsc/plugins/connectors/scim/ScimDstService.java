@@ -16,6 +16,7 @@ import javax.ws.rs.ProcessingException;
 import org.apache.commons.lang3.StringUtils;
 import org.lsc.LscDatasets;
 import org.lsc.LscModifications;
+import org.lsc.Task;
 import org.lsc.beans.IBean;
 import org.lsc.configuration.ConnectionType;
 import org.lsc.configuration.PluginConnectionType;
@@ -67,7 +68,7 @@ public class ScimDstService implements IWritableService {
     }
 
     @Override
-    public Map<String, LscDatasets> getListPivots() throws LscServiceException {
+    public Map<String, LscDatasets> getListPivots(Task task) throws LscServiceException {
         LOGGER.debug("Call to Destination getListPivots");
         try {
             return dao.getList();
@@ -77,7 +78,7 @@ public class ScimDstService implements IWritableService {
     }
 
     @Override
-    public IBean getBean(String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
+    public IBean getBean(Task task, String pivotRawValue, LscDatasets lscDatasets, boolean fromSameService) throws LscServiceException {
     	LOGGER.debug("Call to getBean({}, {}, {})", pivotRawValue, lscDatasets, fromSameService);
         String pivotValue = lscDatasets.getStringValueAttribute(dao.getSourcePivotName());
         String sourceUUIDValue = (settings.getSourceUUID()==null) ? null : lscDatasets.getStringValueAttribute(settings.getSourceUUID());
